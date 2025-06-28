@@ -142,13 +142,14 @@ class _GameScreenState extends State<GameScreen> {
           top: 0,
           child: Row(
             children: [
-              // Score (label + value in 2 cells)
+              // Score (label + value in 2 cells, vertical layout)
               Container(
                 width: 2 * cellSize,
                 height: cellSize,
                 child: Center(
                   child: Text(
-                    '${gameProvider.scoreText}: ${gameProvider.score}',
+                    '${gameProvider.scoreText}:\n${gameProvider.score}',
+                    textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: cellSize * 0.35,
                       fontWeight: FontWeight.w100,
@@ -158,13 +159,14 @@ class _GameScreenState extends State<GameScreen> {
                   ),
                 ),
               ),
-              // Best score (label + value in 2 cells)
+              // Best score (label + value in 2 cells, vertical layout)
               Container(
                 width: 2 * cellSize,
                 height: cellSize,
                 child: Center(
                   child: Text(
-                    '${gameProvider.bestScoreText}: ${gameProvider.bestScore}',
+                    '${gameProvider.bestScoreText}:\n${gameProvider.bestScore}',
+                    textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: cellSize * 0.35,
                       fontWeight: FontWeight.w100,
