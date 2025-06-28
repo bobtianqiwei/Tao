@@ -38,8 +38,8 @@ class _TileWidgetState extends State<TileWidget> {
       ),
     ).animate()
       .scale(
-        begin: widget.tile.isNew ? 0.0 : 1.0,
-        end: 1.0,
+        begin: widget.tile.isNew ? const Offset(0.0, 0.0) : const Offset(1.0, 1.0),
+        end: const Offset(1.0, 1.0),
         duration: const Duration(milliseconds: 200),
         curve: Curves.elasticOut,
       )
@@ -52,8 +52,8 @@ class _TileWidgetState extends State<TileWidget> {
         },
       )
       .scale(
-        begin: 1.0,
-        end: 1.1,
+        begin: const Offset(1.0, 1.0),
+        end: const Offset(1.1, 1.1),
         duration: const Duration(milliseconds: 100),
         curve: Curves.easeInOut,
       );
