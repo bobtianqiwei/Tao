@@ -1,10 +1,10 @@
 # 道（Tao）
 
-A minimalist puzzle game inspired by 2048, featuring Chinese characters representing the five elements (五行) that merge into higher-level characters and ultimately into "道" (Dao). Experience the harmony of traditional Chinese philosophy combined with modern puzzle mechanics.
+A minimalist puzzle game inspired by 2048, featuring Chinese characters representing the five elements (五行) that merge into higher-level characters and ultimately into "道" (Tao). Experience the harmony of traditional Chinese philosophy combined with modern puzzle mechanics.
 
 ## 🎮 Game Concept
 
-Players merge tiles with Chinese characters representing the five elements (金、木、水、火、土) to create higher-level characters, ultimately reaching the goal of "道" (Dao). The game follows the traditional Chinese philosophy of the Five Elements cycle: Wood → Fire → Earth → Metal → Water → Wood, culminating in the synthesis of "道" (Dao).
+Players merge tiles with Chinese characters representing the five elements (金、木、水、火、土) to create higher-level characters, ultimately reaching the goal of "道" (Tao). The game follows the traditional Chinese philosophy of the Five Elements cycle: Wood → Fire → Earth → Metal → Water → Wood, culminating in the synthesis of "道" (Tao).
 
 ### Character Progression
 - **木** → **林** → **森** → **火** → **炎** → **燚** → **土** → **圭** → **垚** → **金** → **鑫** → **鑾** → **水** → **沝** → **淼** → **道**
@@ -131,4 +131,4 @@ This project is developed as a personal game project showcasing Flutter developm
 
 ---
 
-**Experience the journey from the Five Elements to the ultimate Dao!** 🎮✨ 
+**Experience the journey from the Five Elements to the ultimate Tao!** 🎮✨ 
