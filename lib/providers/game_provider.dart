@@ -1,11 +1,10 @@
 import 'dart:math';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/tile.dart';
 import '../models/character.dart';
 
 class GameProvider extends ChangeNotifier {
-  static const int gridSize = 4;
   static const int maxScore = 1000000;
   
   List<List<Tile>> _board = [];
@@ -14,6 +13,8 @@ class GameProvider extends ChangeNotifier {
   bool _gameOver = false;
   bool _gameWon = false;
   bool _canContinue = false;
+  int _gridSize = 4; // 默认4×4
+  bool _isDarkMode = false; // 默认浅色模式
 
   // Getters
   List<List<Tile>> get board => _board;
@@ -22,17 +23,35 @@ class GameProvider extends ChangeNotifier {
   bool get gameOver => _gameOver;
   bool get gameWon => _gameWon;
   bool get canContinue => _canContinue;
+  int get gridSize => _gridSize;
+  bool get isDarkMode => _isDarkMode;
 
   GameProvider() {
     _loadGame();
   }
 
+  // 设置网格尺寸
+  void setGridSize(int size) {
+    if (size != _gridSize) {
+      _gridSize = size;
+      initGame();
+      _saveGame();
+    }
+  }
+
+  // 切换主题模式
+  void toggleTheme() {
+    _isDarkMode = !_isDarkMode;
+    _saveGame();
+    notifyListeners();
+  }
+
   // 初始化游戏
   void initGame() {
     _board = List.generate(
-      gridSize,
+      _gridSize,
       (row) => List.generate(
-        gridSize,
+        _gridSize,
         (col) => Tile(row: row, col: col),
       ),
     );
@@ -51,8 +70,8 @@ class GameProvider extends ChangeNotifier {
   // 添加随机方块
   void _addRandomTile() {
     final emptyTiles = <Tile>[];
-    for (int row = 0; row < gridSize; row++) {
-      for (int col = 0; col < gridSize; col++) {
+    for (int row = 0; row < _gridSize; row++) {
+      for (int col = 0; col < _gridSize; col++) {
         if (_board[row][col].isEmpty) {
           emptyTiles.add(_board[row][col]);
         }
@@ -105,16 +124,16 @@ class GameProvider extends ChangeNotifier {
   // 向上移动
   bool _moveUp() {
     bool moved = false;
-    for (int col = 0; col < gridSize; col++) {
+    for (int col = 0; col < _gridSize; col++) {
       final column = <Tile>[];
-      for (int row = 0; row < gridSize; row++) {
+      for (int row = 0; row < _gridSize; row++) {
         if (!_board[row][col].isEmpty) {
           column.add(_board[row][col]);
         }
       }
       
       final mergedColumn = _mergeTiles(column);
-      for (int row = 0; row < gridSize; row++) {
+      for (int row = 0; row < _gridSize; row++) {
         final newTile = row < mergedColumn.length 
             ? mergedColumn[row].copyWith(row: row, col: col)
             : Tile(row: row, col: col);
@@ -131,24 +150,26 @@ class GameProvider extends ChangeNotifier {
   // 向下移动
   bool _moveDown() {
     bool moved = false;
-    for (int col = 0; col < gridSize; col++) {
+    for (int col = 0; col < _gridSize; col++) {
       final column = <Tile>[];
-      for (int row = gridSize - 1; row >= 0; row--) {
+      // 从底部向上收集非空方块
+      for (int row = _gridSize - 1; row >= 0; row--) {
         if (!_board[row][col].isEmpty) {
           column.add(_board[row][col]);
         }
       }
       
       final mergedColumn = _mergeTiles(column);
-      for (int row = 0; row < gridSize; row++) {
+      // 从底部开始填充
+      for (int row = 0; row < _gridSize; row++) {
         final newTile = row < mergedColumn.length 
-            ? mergedColumn[gridSize - 1 - row].copyWith(row: row, col: col)
-            : Tile(row: row, col: col);
+            ? mergedColumn[row].copyWith(row: _gridSize - 1 - row, col: col)
+            : Tile(row: _gridSize - 1 - row, col: col);
         
-        if (_board[row][col] != newTile) {
+        if (_board[_gridSize - 1 - row][col] != newTile) {
           moved = true;
         }
-        _board[row][col] = newTile;
+        _board[_gridSize - 1 - row][col] = newTile;
       }
     }
     return moved;
@@ -157,16 +178,16 @@ class GameProvider extends ChangeNotifier {
   // 向左移动
   bool _moveLeft() {
     bool moved = false;
-    for (int row = 0; row < gridSize; row++) {
+    for (int row = 0; row < _gridSize; row++) {
       final rowTiles = <Tile>[];
-      for (int col = 0; col < gridSize; col++) {
+      for (int col = 0; col < _gridSize; col++) {
         if (!_board[row][col].isEmpty) {
           rowTiles.add(_board[row][col]);
         }
       }
       
       final mergedRow = _mergeTiles(rowTiles);
-      for (int col = 0; col < gridSize; col++) {
+      for (int col = 0; col < _gridSize; col++) {
         final newTile = col < mergedRow.length 
             ? mergedRow[col].copyWith(row: row, col: col)
             : Tile(row: row, col: col);
@@ -183,24 +204,26 @@ class GameProvider extends ChangeNotifier {
   // 向右移动
   bool _moveRight() {
     bool moved = false;
-    for (int row = 0; row < gridSize; row++) {
+    for (int row = 0; row < _gridSize; row++) {
       final rowTiles = <Tile>[];
-      for (int col = gridSize - 1; col >= 0; col--) {
+      // 从右向左收集非空方块
+      for (int col = _gridSize - 1; col >= 0; col--) {
         if (!_board[row][col].isEmpty) {
           rowTiles.add(_board[row][col]);
         }
       }
       
       final mergedRow = _mergeTiles(rowTiles);
-      for (int col = 0; col < gridSize; col++) {
+      // 从右向左填充
+      for (int col = 0; col < _gridSize; col++) {
         final newTile = col < mergedRow.length 
-            ? mergedRow[gridSize - 1 - col].copyWith(row: row, col: col)
-            : Tile(row: row, col: col);
+            ? mergedRow[col].copyWith(row: row, col: _gridSize - 1 - col)
+            : Tile(row: row, col: _gridSize - 1 - col);
         
-        if (_board[row][col] != newTile) {
+        if (_board[row][_gridSize - 1 - col] != newTile) {
           moved = true;
         }
-        _board[row][col] = newTile;
+        _board[row][_gridSize - 1 - col] = newTile;
       }
     }
     return moved;
@@ -242,8 +265,8 @@ class GameProvider extends ChangeNotifier {
   // 检查游戏状态
   void _checkGameState() {
     // 检查是否获胜（合成出道）
-    for (int row = 0; row < gridSize; row++) {
-      for (int col = 0; col < gridSize; col++) {
+    for (int row = 0; row < _gridSize; row++) {
+      for (int col = 0; col < _gridSize; col++) {
         if (_board[row][col].character?.elementType == ElementType.dao) {
           _gameWon = true;
           _canContinue = true;
@@ -269,24 +292,24 @@ class GameProvider extends ChangeNotifier {
   // 检查是否可以移动
   bool _canMove() {
     // 检查是否有空格
-    for (int row = 0; row < gridSize; row++) {
-      for (int col = 0; col < gridSize; col++) {
+    for (int row = 0; row < _gridSize; row++) {
+      for (int col = 0; col < _gridSize; col++) {
         if (_board[row][col].isEmpty) return true;
       }
     }
 
     // 检查是否可以合并
-    for (int row = 0; row < gridSize; row++) {
-      for (int col = 0; col < gridSize; col++) {
+    for (int row = 0; row < _gridSize; row++) {
+      for (int col = 0; col < _gridSize; col++) {
         final currentTile = _board[row][col];
         if (currentTile.isEmpty) continue;
 
         // 检查右边
-        if (col + 1 < gridSize && currentTile.canMergeWith(_board[row][col + 1])) {
+        if (col + 1 < _gridSize && currentTile.canMergeWith(_board[row][col + 1])) {
           return true;
         }
         // 检查下边
-        if (row + 1 < gridSize && currentTile.canMergeWith(_board[row + 1][col])) {
+        if (row + 1 < _gridSize && currentTile.canMergeWith(_board[row + 1][col])) {
           return true;
         }
       }
@@ -316,13 +339,16 @@ class GameProvider extends ChangeNotifier {
   Future<void> _saveGame() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('bestScore', _bestScore);
-    // 这里可以添加更多保存逻辑
+    await prefs.setInt('gridSize', _gridSize);
+    await prefs.setBool('isDarkMode', _isDarkMode);
   }
 
   // 加载游戏
   Future<void> _loadGame() async {
     final prefs = await SharedPreferences.getInstance();
     _bestScore = prefs.getInt('bestScore') ?? 0;
+    _gridSize = prefs.getInt('gridSize') ?? 4;
+    _isDarkMode = prefs.getBool('isDarkMode') ?? false;
     initGame();
   }
 }

@@ -7,81 +7,63 @@ class GameOverDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16.0),
-      ),
-      child: Container(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.sentiment_dissatisfied,
-              size: 64,
-              color: Colors.grey,
+    return Consumer<GameProvider>(
+      builder: (context, gameProvider, child) {
+        final isDarkMode = gameProvider.isDarkMode;
+        
+        return AlertDialog(
+          backgroundColor: isDarkMode ? Colors.black : Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(0),
+          ),
+          title: Text(
+            '游戏结束',
+            style: TextStyle(
+              color: isDarkMode ? Colors.white : Colors.black,
+              fontFamily: 'OPPOSans',
+              fontWeight: FontWeight.w100,
             ),
-            const SizedBox(height: 16),
-            const Text(
-              '游戏结束',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF776E65),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '没有更多移动可能了',
+                style: TextStyle(
+                  color: isDarkMode ? Colors.white70 : Colors.black87,
+                  fontFamily: 'OPPOSans',
+                  fontWeight: FontWeight.w100,
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              '没有更多移动可能了',
-              style: TextStyle(
-                fontSize: 18,
-                color: Color(0xFF776E65),
+              const SizedBox(height: 16),
+              Text(
+                '最终得分：${gameProvider.score}',
+                style: TextStyle(
+                  color: isDarkMode ? Colors.white : Colors.black,
+                  fontFamily: 'OPPOSans',
+                  fontWeight: FontWeight.w100,
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            Consumer<GameProvider>(
-              builder: (context, gameProvider, child) {
-                return Text(
-                  '最终得分：${gameProvider.score}',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF8F7A66),
-                  ),
-                );
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                gameProvider.restart();
               },
-            ),
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    final gameProvider = Provider.of<GameProvider>(context, listen: false);
-                    gameProvider.restart();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF8F7A66),
-                    foregroundColor: Colors.white,
-                  ),
-                  child: const Text('重新开始'),
+              child: Text(
+                '重新开始',
+                style: TextStyle(
+                  color: isDarkMode ? Colors.white : Colors.black,
+                  fontFamily: 'OPPOSans',
+                  fontWeight: FontWeight.w100,
                 ),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.grey,
-                    foregroundColor: Colors.white,
-                  ),
-                  child: const Text('退出'),
-                ),
-              ],
+              ),
             ),
           ],
-        ),
-      ),
+        );
+      },
     );
   }
 } 

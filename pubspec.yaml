@@ -27,4 +27,9 @@ flutter:
   assets:
     - assets/images/
     - assets/audio/
-    - assets/fonts/ 
+    - assets/fonts/
+  
+  fonts:
+    - family: OPPOSans
+      fonts:
+        - asset: assets/fonts/OPPO Sans 4.0.ttf

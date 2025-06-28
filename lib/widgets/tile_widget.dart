@@ -1,102 +1,104 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import '../models/tile.dart';
 
 class TileWidget extends StatefulWidget {
   final Tile tile;
+  final double size;
 
   const TileWidget({
     super.key,
     required this.tile,
+    required this.size,
   });
 
   @override
   State<TileWidget> createState() => _TileWidgetState();
 }
 
-class _TileWidgetState extends State<TileWidget> {
+class _TileWidgetState extends State<TileWidget>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _opacityAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
+    );
+
+    _scaleAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOutBack,
+    ));
+
+    _opacityAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeIn,
+    ));
+
+    if (widget.tile.isNew) {
+      _animationController.forward();
+    } else {
+      _animationController.value = 1.0;
+    }
+  }
+
+  @override
+  void didUpdateWidget(TileWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    
+    if (widget.tile.isNew && !oldWidget.tile.isNew) {
+      _animationController.forward();
+    } else if (widget.tile.isMerged && !oldWidget.tile.isMerged) {
+      _animationController.forward();
+    }
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.easeInOut,
-      decoration: BoxDecoration(
-        color: widget.tile.backgroundColor,
-        borderRadius: BorderRadius.circular(8.0),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Center(
-        child: widget.tile.isEmpty
-            ? null
-            : _buildCharacterContent(),
-      ),
-    ).animate()
-      .scale(
-        begin: widget.tile.isNew ? const Offset(0.0, 0.0) : const Offset(1.0, 1.0),
-        end: const Offset(1.0, 1.0),
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.elasticOut,
-      )
-      .then()
-      .animate(
-        onPlay: (controller) {
-          if (widget.tile.isMerged) {
-            controller.repeat(reverse: true, count: 2);
-          }
-        },
-      )
-      .scale(
-        begin: const Offset(1.0, 1.0),
-        end: const Offset(1.1, 1.1),
-        duration: const Duration(milliseconds: 100),
-        curve: Curves.easeInOut,
-      );
-  }
-
-  Widget _buildCharacterContent() {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        // 汉字
-        Text(
-          widget.tile.displayText,
-          style: TextStyle(
-            fontSize: _getFontSize(),
-            fontWeight: FontWeight.bold,
-            color: widget.tile.textColor,
-            fontFamily: 'NotoSansSC',
-          ),
-        ),
-        
-        // 拼音（可选显示）
-        if (widget.tile.character != null && widget.tile.character!.level > 1)
-          Text(
-            widget.tile.character!.pinyin,
-            style: TextStyle(
-              fontSize: 10,
-              color: widget.tile.textColor.withOpacity(0.8),
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
+    return AnimatedBuilder(
+      animation: _animationController,
+      builder: (context, child) {
+        return Transform.scale(
+          scale: _scaleAnimation.value,
+          child: Opacity(
+            opacity: _opacityAnimation.value,
+            child: Container(
+              width: widget.size,
+              height: widget.size,
+              color: isDarkMode ? Colors.black : Colors.white,
+              child: Center(
+                child: Text(
+                  widget.tile.displayText,
+                  style: TextStyle(
+                    fontSize: widget.size * 0.8,
+                    fontWeight: FontWeight.w100,
+                    color: widget.tile.textColor,
+                    fontFamily: 'OPPOSans',
+                  ),
+                ),
+              ),
             ),
           ),
-      ],
+        );
+      },
     );
-  }
-
-  double _getFontSize() {
-    if (widget.tile.character == null) return 24;
-    
-    final character = widget.tile.character!.character;
-    if (character.length == 1) {
-      return 32;
-    } else if (character.length == 2) {
-      return 28;
-    } else {
-      return 24;
-    }
   }
 } 

@@ -9,44 +9,65 @@ class ScoreBoard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<GameProvider>(
       builder: (context, gameProvider, child) {
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildScoreCard('分数', gameProvider.score),
-              _buildScoreCard('最高分', gameProvider.bestScore),
-            ],
-          ),
+        final isDarkMode = gameProvider.isDarkMode;
+        
+        return Row(
+          children: [
+            // 当前分数
+            Expanded(
+              child: _buildScoreCard(
+                '分数',
+                gameProvider.score.toString(),
+                isDarkMode,
+              ),
+            ),
+            
+            const SizedBox(width: 8),
+            
+            // 最高分数
+            Expanded(
+              child: _buildScoreCard(
+                '最高',
+                gameProvider.bestScore.toString(),
+                isDarkMode,
+              ),
+            ),
+          ],
         );
       },
     );
   }
 
-  Widget _buildScoreCard(String title, int score) {
+  Widget _buildScoreCard(String label, String value, bool isDarkMode) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFBBADA0),
-        borderRadius: BorderRadius.circular(8.0),
+        color: isDarkMode ? Colors.black : Colors.white,
+        border: Border.all(
+          color: isDarkMode ? Colors.white : Colors.black,
+          width: 1,
+        ),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            title,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Color(0xFFEEE4DA),
-              fontWeight: FontWeight.bold,
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: isDarkMode ? Colors.white70 : Colors.black54,
+              fontFamily: 'OPPOSans',
+              fontWeight: FontWeight.w300,
             ),
           ),
           const SizedBox(height: 4),
           Text(
-            score.toString(),
-            style: const TextStyle(
-              fontSize: 20,
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
+            value,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w300,
+              color: isDarkMode ? Colors.white : Colors.black,
+              fontFamily: 'OPPOSans',
             ),
           ),
         ],

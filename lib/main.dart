@@ -14,16 +14,31 @@ class WuxingGameApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (context) => GameProvider(),
-      child: MaterialApp(
-        title: '五行2048',
-        theme: ThemeData(
-          primarySwatch: Colors.orange,
-          fontFamily: 'NotoSansSC',
-          useMaterial3: true,
-        ),
-        home: const GameScreen(),
-        debugShowCheckedModeBanner: false,
+      child: Consumer<GameProvider>(
+        builder: (context, gameProvider, child) {
+          return MaterialApp(
+            title: '道',
+            theme: _buildTheme(gameProvider.isDarkMode),
+            home: const GameScreen(),
+            debugShowCheckedModeBanner: false,
+          );
+        },
       ),
+    );
+  }
+
+  ThemeData _buildTheme(bool isDarkMode) {
+    return ThemeData(
+      primarySwatch: Colors.grey,
+      fontFamily: 'OPPOSans',
+      useMaterial3: false,
+      scaffoldBackgroundColor: isDarkMode ? Colors.black : Colors.white,
+      appBarTheme: AppBarTheme(
+        backgroundColor: isDarkMode ? Colors.black : Colors.white,
+        foregroundColor: isDarkMode ? Colors.white : Colors.black,
+        elevation: 0,
+      ),
+      brightness: isDarkMode ? Brightness.dark : Brightness.light,
     );
   }
 } 

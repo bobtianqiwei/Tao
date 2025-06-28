@@ -61,16 +61,13 @@ class Tile {
   // 获取显示文本
   String get displayText => character?.character ?? '';
 
-  // 获取背景颜色
-  Color get backgroundColor {
-    if (character == null) return Colors.grey[200]!;
-    return character!.getColor().withOpacity(0.8);
-  }
+  // 获取背景颜色 - 根据主题模式返回
+  Color get backgroundColor => Colors.white; // 将在widget中根据主题动态设置
 
   // 获取文字颜色
   Color get textColor {
     if (character == null) return Colors.transparent;
-    return Colors.white;
+    return character!.getColor();
   }
 
   @override

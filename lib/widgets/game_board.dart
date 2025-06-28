@@ -4,94 +4,135 @@ import '../providers/game_provider.dart';
 import '../models/tile.dart';
 import 'tile_widget.dart';
 
-class GameBoard extends StatefulWidget {
-  final Function(Direction) onSwipe;
+class GameBoard extends StatelessWidget {
+  final Function(Direction)? onSwipe;
 
-  const GameBoard({
-    super.key,
-    required this.onSwipe,
-  });
-
-  @override
-  State<GameBoard> createState() => _GameBoardState();
-}
-
-class _GameBoardState extends State<GameBoard> {
-  Offset? _startPosition;
+  const GameBoard({super.key, this.onSwipe});
 
   @override
   Widget build(BuildContext context) {
     return Consumer<GameProvider>(
       builder: (context, gameProvider, child) {
-        return GestureDetector(
-          onPanStart: _onPanStart,
-          onPanUpdate: _onPanUpdate,
-          onPanEnd: _onPanEnd,
-          child: Container(
-            width: 320,
-            height: 320,
-            padding: const EdgeInsets.all(8.0),
-            decoration: BoxDecoration(
-              color: const Color(0xFFBBADA0),
-              borderRadius: BorderRadius.circular(8.0),
+        final isDarkMode = gameProvider.isDarkMode;
+        final gridSize = gameProvider.gridSize;
+        final board = gameProvider.board;
+        
+        // 计算棋盘大小，确保填满分配的网格空间
+        final boardSize = MediaQuery.of(context).size.width < MediaQuery.of(context).size.height 
+            ? MediaQuery.of(context).size.width 
+            : MediaQuery.of(context).size.height;
+        final cellSize = boardSize / 28; // 28×28网格
+        final tileSize = cellSize; // 每个方块填满一个网格单元格
+        
+        return Container(
+          width: gridSize * cellSize,
+          height: gridSize * cellSize,
+          decoration: BoxDecoration(
+            color: isDarkMode ? Colors.black : Colors.white,
+            border: Border.all(
+              color: isDarkMode ? Colors.grey[600]! : Colors.grey[400]!,
+              width: 1,
             ),
-            child: GridView.builder(
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 4,
-                crossAxisSpacing: 8.0,
-                mainAxisSpacing: 8.0,
-              ),
-              itemCount: 16,
-              itemBuilder: (context, index) {
-                final row = index ~/ 4;
-                final col = index % 4;
-                final tile = gameProvider.board[row][col];
-                return TileWidget(tile: tile);
-              },
+          ),
+          child: GestureDetector(
+            onPanUpdate: (details) {
+              if (onSwipe != null) {
+                final dx = details.delta.dx;
+                final dy = details.delta.dy;
+                
+                if (dx.abs() > dy.abs()) {
+                  if (dx > 0) {
+                    onSwipe!(Direction.right);
+                  } else {
+                    onSwipe!(Direction.left);
+                  }
+                } else {
+                  if (dy > 0) {
+                    onSwipe!(Direction.down);
+                  } else {
+                    onSwipe!(Direction.up);
+                  }
+                }
+              }
+            },
+            child: Stack(
+              children: [
+                // 棋盘内部网格线
+                CustomPaint(
+                  painter: BoardGridPainter(
+                    gridSize: gridSize,
+                    cellSize: cellSize,
+                    isDarkMode: isDarkMode,
+                  ),
+                  size: Size(gridSize * cellSize, gridSize * cellSize),
+                ),
+                // 游戏方块
+                GridView.builder(
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: gridSize,
+                    childAspectRatio: 1.0,
+                  ),
+                  itemCount: gridSize * gridSize,
+                  itemBuilder: (context, index) {
+                    final row = index ~/ gridSize;
+                    final col = index % gridSize;
+                    final tile = board[row][col];
+                    
+                    return TileWidget(
+                      tile: tile,
+                      size: tileSize,
+                    );
+                  },
+                ),
+              ],
             ),
           ),
         );
       },
     );
   }
+}
 
-  void _onPanStart(DragStartDetails details) {
-    _startPosition = details.globalPosition;
-  }
+// 棋盘网格绘制器
+class BoardGridPainter extends CustomPainter {
+  final int gridSize;
+  final double cellSize;
+  final bool isDarkMode;
 
-  void _onPanUpdate(DragUpdateDetails details) {
-    // 可以在这里添加实时反馈
-  }
+  BoardGridPainter({
+    required this.gridSize,
+    required this.cellSize,
+    required this.isDarkMode,
+  });
 
-  void _onPanEnd(DragEndDetails details) {
-    if (_startPosition == null) return;
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = isDarkMode ? Colors.grey[700]! : Colors.grey[300]!
+      ..strokeWidth = 1.0
+      ..style = PaintingStyle.stroke;
 
-    final endPosition = details.globalPosition;
-    final deltaX = endPosition.dx - _startPosition!.dx;
-    final deltaY = endPosition.dy - _startPosition!.dy;
-    final minSwipeDistance = 50.0;
-
-    if (deltaX.abs() > deltaY.abs()) {
-      // 水平滑动
-      if (deltaX.abs() > minSwipeDistance) {
-        if (deltaX > 0) {
-          widget.onSwipe(Direction.right);
-        } else {
-          widget.onSwipe(Direction.left);
-        }
-      }
-    } else {
-      // 垂直滑动
-      if (deltaY.abs() > minSwipeDistance) {
-        if (deltaY > 0) {
-          widget.onSwipe(Direction.down);
-        } else {
-          widget.onSwipe(Direction.up);
-        }
-      }
+    // 绘制棋盘内部网格线
+    for (int i = 1; i < gridSize; i++) {
+      final position = i * cellSize;
+      
+      // 垂直线
+      canvas.drawLine(
+        Offset(position, 0),
+        Offset(position, size.height),
+        paint,
+      );
+      
+      // 水平线
+      canvas.drawLine(
+        Offset(0, position),
+        Offset(size.width, position),
+        paint,
+      );
     }
-
-    _startPosition = null;
   }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 } 
