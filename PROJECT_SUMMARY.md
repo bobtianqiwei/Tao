@@ -1,34 +1,34 @@
-# Project Summary: 道 (Dao) - Five Elements 2048 Game
+# Tao (道) - Project Summary
 
 ## Overview
-A minimalist puzzle game built with Flutter, featuring Chinese characters representing the five elements (wood, fire, earth, metal, water) that merge following traditional Chinese philosophy cycles.
+Tao is a minimalist puzzle game inspired by 2048, featuring Chinese characters representing the five elements that merge into higher-level characters and ultimately into "道" (Dao). The game combines traditional Chinese philosophy with modern puzzle mechanics.
 
-## Key Features Implemented
+## Key Features
+- **Minimalist Design**: Black and white interface with ultra-thin typography
+- **Five Elements System**: Wood (木), Fire (火), Earth (土), Metal (金), Water (水)
+- **Progressive Merging**: Characters evolve through multiple levels
+- **Multiple Grid Sizes**: 4×4 to 24×24 difficulty levels
+- **Auto Play**: AI with random moves for demonstration
+- **Bilingual Support**: Chinese and English interfaces
+- **Cross-Platform**: Web, mobile, and desktop support
 
-### 🎮 Core Gameplay
-- **Five Elements System**: Wood (木) → Fire (火) → Earth (土) → Metal (金) → Water (水) → Wood (木)
-- **Character Merging**: Identical Chinese characters merge to create higher-level elements
-- **Ultimate Goal**: Create the character "道" (Dao) representing the ultimate principle
+## Technical Implementation
+- **Framework**: Flutter with Dart
+- **Architecture**: Provider pattern for state management
+- **Grid System**: 28×28 adaptive layout
+- **Font**: OPPO Sans (ultra-thin weight)
+- **UI**: No shadows, rounded corners, or decorative elements
 
-### 🎨 UI/UX Design
-- **Minimalist Interface**: Pure black and white theme with 1px grid lines
-- **27×27 Grid System**: Master grid with game board dynamically centered
-- **Adaptive Scaling**: Automatically adjusts to screen size without overflow
-- **Theme Support**: Light and dark mode toggle
-- **Typography**: OPPO Sans font with ultra-thin weight (w100)
+## Game Mechanics
+Players merge identical Chinese characters to create higher-level elements following the traditional five elements cycle. The ultimate goal is to reach the "道" character, representing the highest level of achievement.
 
-### 📱 Technical Implementation
-- **Cross-platform**: iOS, Android, Windows, macOS, Linux, Web
-- **State Management**: Provider pattern for game state
-- **Responsive Layout**: Custom grid system with automatic scaling
-- **Input Methods**: Arrow keys and swipe gestures
-- **Data Persistence**: SharedPreferences for scores and settings
-
-### 🎯 Game Modes
-- **4×4 Expert**: Most challenging (default)
-- **8×8 Hard**: High difficulty
-- **16×16 Medium**: Balanced challenge
-- **24×24 Easy**: Simplest mode
+## Development Status
+- ✅ Core game logic implemented
+- ✅ UI layout and styling complete
+- ✅ Auto play functionality added
+- ✅ Bilingual support implemented
+- ✅ Cross-platform compatibility
+- ✅ Responsive design
 
 ## Technical Architecture
 

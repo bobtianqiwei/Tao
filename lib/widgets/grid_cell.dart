@@ -17,8 +17,14 @@ class GridCell extends StatelessWidget {
     return Container(
       width: cellSize,
       height: cellSize,
-      color: isDarkMode ? Colors.black : Colors.white,
-      child: Center(child: child),
+      decoration: BoxDecoration(
+        color: isDarkMode ? Colors.grey[900] : Colors.grey[100],
+        border: Border.all(
+          color: isDarkMode ? Colors.grey[600]! : Colors.grey[400]!,
+          width: 1,
+        ),
+      ),
+      child: child,
     );
   }
 } 

@@ -88,7 +88,7 @@ class _TileWidgetState extends State<TileWidget>
                 child: Text(
                   widget.tile.displayText,
                   style: TextStyle(
-                    fontSize: widget.size * 0.8,
+                    fontSize: widget.size * 0.9,
                     fontWeight: FontWeight.w100,
                     color: widget.tile.textColor,
                     fontFamily: 'OPPOSans',

@@ -1,30 +1,40 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/tile.dart';
 import '../models/character.dart';
 
+enum Direction { up, down, left, right }
+
 class GameProvider extends ChangeNotifier {
-  static const int maxScore = 1000000;
+  static const int maxScore = 999999;
+  static const int totalGridSize = 28; // 28×28 grid system
   
   List<List<Tile>> _board = [];
   int _score = 0;
   int _bestScore = 0;
+  int _gridSize = 4;
+  bool _isDarkMode = false;
+  bool _isEnglish = false;
   bool _gameOver = false;
   bool _gameWon = false;
   bool _canContinue = false;
-  int _gridSize = 4; // 默认4×4
-  bool _isDarkMode = false; // 默认浅色模式
+  bool _isAutoPlaying = false;
+  Timer? _autoPlayTimer;
+  bool _hasManualThemeSetting = false;
 
   // Getters
   List<List<Tile>> get board => _board;
   int get score => _score;
   int get bestScore => _bestScore;
+  int get gridSize => _gridSize;
+  bool get isDarkMode => _isDarkMode;
+  bool get isEnglish => _isEnglish;
   bool get gameOver => _gameOver;
   bool get gameWon => _gameWon;
   bool get canContinue => _canContinue;
-  int get gridSize => _gridSize;
-  bool get isDarkMode => _isDarkMode;
+  bool get isAutoPlaying => _isAutoPlaying;
 
   GameProvider() {
     _loadGame();
@@ -39,32 +49,55 @@ class GameProvider extends ChangeNotifier {
     }
   }
 
-  // 切换主题模式
-  void toggleTheme() {
-    _isDarkMode = !_isDarkMode;
+  // Toggle language
+  void toggleLanguage() {
+    _isEnglish = !_isEnglish;
     _saveGame();
     notifyListeners();
   }
 
-  // 初始化游戏
+  // Toggle theme (manual override)
+  void toggleTheme() {
+    _isDarkMode = !_isDarkMode;
+    _hasManualThemeSetting = true;
+    _saveGame();
+    notifyListeners();
+  }
+
+  // Initialize game with system theme
   void initGame() {
-    _board = List.generate(
-      _gridSize,
-      (row) => List.generate(
-        _gridSize,
-        (col) => Tile(row: row, col: col),
-      ),
-    );
+    _board = List.generate(_gridSize, (row) {
+      return List.generate(_gridSize, (col) {
+        return Tile(row: row, col: col);
+      });
+    });
+    
+    // Auto-detect system theme if not manually set
+    if (!_hasManualThemeSetting) {
+      _isDarkMode = _getSystemTheme();
+    }
+    
+    _addRandomTile();
+    _addRandomTile();
     _score = 0;
     _gameOver = false;
     _gameWon = false;
     _canContinue = false;
-    
-    // 添加初始方块
-    _addRandomTile();
-    _addRandomTile();
-    
     notifyListeners();
+  }
+
+  // Get system theme preference
+  bool _getSystemTheme() {
+    // This will be set by the UI layer based on MediaQuery
+    return false; // Default to light mode
+  }
+
+  // Set system theme detection
+  void setSystemTheme(bool isDark) {
+    if (!_hasManualThemeSetting) {
+      _isDarkMode = isDark;
+      notifyListeners();
+    }
   }
 
   // 添加随机方块
@@ -91,13 +124,11 @@ class GameProvider extends ChangeNotifier {
     }
   }
 
-  // 移动方块
-  void move(Direction direction) {
-    if (_gameOver && !_canContinue) return;
-
-    final oldBoard = _copyBoard();
+  // Move in specified direction
+  bool move(Direction direction) {
+    if (_gameOver && !_canContinue) return false;
+    
     bool moved = false;
-
     switch (direction) {
       case Direction.up:
         moved = _moveUp();
@@ -112,13 +143,15 @@ class GameProvider extends ChangeNotifier {
         moved = _moveRight();
         break;
     }
-
+    
     if (moved) {
       _addRandomTile();
       _checkGameState();
       _saveGame();
       notifyListeners();
     }
+    
+    return moved;
   }
 
   // 向上移动
@@ -147,83 +180,118 @@ class GameProvider extends ChangeNotifier {
     return moved;
   }
 
-  // 向下移动
+  // Move down
   bool _moveDown() {
     bool moved = false;
     for (int col = 0; col < _gridSize; col++) {
-      final column = <Tile>[];
-      // 从底部向上收集非空方块
+      // Create a new column with merged tiles
+      final newColumn = List<Tile>.filled(_gridSize, Tile(row: 0, col: col));
+      int newIndex = _gridSize - 1;
+      
+      // Process tiles from bottom to top
       for (int row = _gridSize - 1; row >= 0; row--) {
         if (!_board[row][col].isEmpty) {
-          column.add(_board[row][col]);
+          newColumn[newIndex] = _board[row][col].copyWith(row: newIndex, col: col);
+          newIndex--;
         }
       }
       
-      final mergedColumn = _mergeTiles(column);
-      // 从底部开始填充
+      // Merge adjacent tiles
+      for (int i = _gridSize - 1; i > 0; i--) {
+        if (!newColumn[i].isEmpty && 
+            !newColumn[i-1].isEmpty && 
+            newColumn[i].canMergeWith(newColumn[i-1])) {
+          final mergedTile = newColumn[i].mergeWith(newColumn[i-1]);
+          newColumn[i] = mergedTile.copyWith(row: i, col: col);
+          newColumn[i-1] = Tile(row: i-1, col: col);
+          _score += _calculateMergeScore(mergedTile);
+        }
+      }
+      
+      // Update board
       for (int row = 0; row < _gridSize; row++) {
-        final newTile = row < mergedColumn.length 
-            ? mergedColumn[row].copyWith(row: _gridSize - 1 - row, col: col)
-            : Tile(row: _gridSize - 1 - row, col: col);
-        
-        if (_board[_gridSize - 1 - row][col] != newTile) {
+        if (_board[row][col] != newColumn[row]) {
           moved = true;
         }
-        _board[_gridSize - 1 - row][col] = newTile;
+        _board[row][col] = newColumn[row];
       }
     }
     return moved;
   }
 
-  // 向左移动
+  // Move left
   bool _moveLeft() {
     bool moved = false;
     for (int row = 0; row < _gridSize; row++) {
-      final rowTiles = <Tile>[];
+      // Create a new row with merged tiles
+      final newRow = List<Tile>.filled(_gridSize, Tile(row: row, col: 0));
+      int newIndex = 0;
+      
+      // Process tiles from left to right
       for (int col = 0; col < _gridSize; col++) {
         if (!_board[row][col].isEmpty) {
-          rowTiles.add(_board[row][col]);
+          newRow[newIndex] = _board[row][col].copyWith(row: row, col: newIndex);
+          newIndex++;
         }
       }
       
-      final mergedRow = _mergeTiles(rowTiles);
+      // Merge adjacent tiles
+      for (int i = 0; i < newIndex - 1; i++) {
+        if (!newRow[i].isEmpty && 
+            !newRow[i+1].isEmpty && 
+            newRow[i].canMergeWith(newRow[i+1])) {
+          final mergedTile = newRow[i].mergeWith(newRow[i+1]);
+          newRow[i] = mergedTile.copyWith(row: row, col: i);
+          newRow[i+1] = Tile(row: row, col: i+1);
+          _score += _calculateMergeScore(mergedTile);
+        }
+      }
+      
+      // Update board
       for (int col = 0; col < _gridSize; col++) {
-        final newTile = col < mergedRow.length 
-            ? mergedRow[col].copyWith(row: row, col: col)
-            : Tile(row: row, col: col);
-        
-        if (_board[row][col] != newTile) {
+        if (_board[row][col] != newRow[col]) {
           moved = true;
         }
-        _board[row][col] = newTile;
+        _board[row][col] = newRow[col];
       }
     }
     return moved;
   }
 
-  // 向右移动
+  // Move right
   bool _moveRight() {
     bool moved = false;
     for (int row = 0; row < _gridSize; row++) {
-      final rowTiles = <Tile>[];
-      // 从右向左收集非空方块
+      // Create a new row with merged tiles
+      final newRow = List<Tile>.filled(_gridSize, Tile(row: row, col: 0));
+      int newIndex = _gridSize - 1;
+      
+      // Process tiles from right to left
       for (int col = _gridSize - 1; col >= 0; col--) {
         if (!_board[row][col].isEmpty) {
-          rowTiles.add(_board[row][col]);
+          newRow[newIndex] = _board[row][col].copyWith(row: row, col: newIndex);
+          newIndex--;
         }
       }
       
-      final mergedRow = _mergeTiles(rowTiles);
-      // 从右向左填充
+      // Merge adjacent tiles
+      for (int i = _gridSize - 1; i > 0; i--) {
+        if (!newRow[i].isEmpty && 
+            !newRow[i-1].isEmpty && 
+            newRow[i].canMergeWith(newRow[i-1])) {
+          final mergedTile = newRow[i].mergeWith(newRow[i-1]);
+          newRow[i] = mergedTile.copyWith(row: row, col: i);
+          newRow[i-1] = Tile(row: row, col: i-1);
+          _score += _calculateMergeScore(mergedTile);
+        }
+      }
+      
+      // Update board
       for (int col = 0; col < _gridSize; col++) {
-        final newTile = col < mergedRow.length 
-            ? mergedRow[col].copyWith(row: row, col: _gridSize - 1 - col)
-            : Tile(row: row, col: _gridSize - 1 - col);
-        
-        if (_board[row][_gridSize - 1 - col] != newTile) {
+        if (_board[row][col] != newRow[col]) {
           moved = true;
         }
-        _board[row][_gridSize - 1 - col] = newTile;
+        _board[row][col] = newRow[col];
       }
     }
     return moved;
@@ -341,6 +409,7 @@ class GameProvider extends ChangeNotifier {
     await prefs.setInt('bestScore', _bestScore);
     await prefs.setInt('gridSize', _gridSize);
     await prefs.setBool('isDarkMode', _isDarkMode);
+    await prefs.setBool('isEnglish', _isEnglish);
   }
 
   // 加载游戏
@@ -349,8 +418,79 @@ class GameProvider extends ChangeNotifier {
     _bestScore = prefs.getInt('bestScore') ?? 0;
     _gridSize = prefs.getInt('gridSize') ?? 4;
     _isDarkMode = prefs.getBool('isDarkMode') ?? false;
+    _isEnglish = prefs.getBool('isEnglish') ?? false;
     initGame();
   }
-}
 
-enum Direction { up, down, left, right } 
+  // Get localized text
+  String getText(String chinese, String english) {
+    return _isEnglish ? english : chinese;
+  }
+
+  // Get localized texts
+  String get scoreText => getText('分数', 'Score');
+  String get bestScoreText => getText('最高', 'Best');
+  String get settingsText => getText('设置', 'Settings');
+  String get restartText => getText('重新开始', 'Restart');
+  String get cancelText => getText('取消', 'Cancel');
+  String get confirmText => getText('确定', 'Confirm');
+  String get gridSizeText => getText('网格尺寸', 'Grid Size');
+  String get darkModeText => getText('深色模式', 'Dark Mode');
+  String get closeText => getText('关闭', 'Close');
+  String get expertText => getText('专家', 'Expert');
+  String get hardText => getText('困难', 'Hard');
+  String get mediumText => getText('中等', 'Medium');
+  String get easyText => getText('简单', 'Easy');
+  String get restartConfirmText => getText('确定要重新开始游戏吗？当前进度将丢失。', 'Are you sure you want to restart? Current progress will be lost.');
+
+  // Auto play functionality
+  void toggleAutoPlay() {
+    if (_isAutoPlaying) {
+      stopAutoPlay();
+    } else {
+      startAutoPlay();
+    }
+  }
+
+  void startAutoPlay() {
+    if (_gameOver && !_canContinue) return;
+    
+    _isAutoPlaying = true;
+    _autoPlayTimer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
+      if (!_isAutoPlaying || _gameOver) {
+        stopAutoPlay();
+        return;
+      }
+      
+      // Random AI: try moves in random order
+      final moves = [Direction.right, Direction.down, Direction.left, Direction.up];
+      moves.shuffle();
+      bool moved = false;
+      
+      for (final direction in moves) {
+        if (move(direction)) {
+          moved = true;
+          break;
+        }
+      }
+      
+      if (!moved) {
+        stopAutoPlay();
+      }
+    });
+    notifyListeners();
+  }
+
+  void stopAutoPlay() {
+    _isAutoPlaying = false;
+    _autoPlayTimer?.cancel();
+    _autoPlayTimer = null;
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    stopAutoPlay();
+    super.dispose();
+  }
+} 

@@ -41,7 +41,13 @@ class _GameScreenState extends State<GameScreen> {
         final isDarkMode = gameProvider.isDarkMode;
         final gameGridSize = gameProvider.gridSize;
         
-        // 计算单元格大小，确保适应屏幕
+        // Detect system theme and update provider
+        final systemIsDark = MediaQuery.of(context).platformBrightness == Brightness.dark;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          gameProvider.setSystemTheme(systemIsDark);
+        });
+        
+        // Calculate cell size to fit screen
         final screenSize = MediaQuery.of(context).size;
         final cellSize = (screenSize.width < screenSize.height 
             ? screenSize.width 
@@ -53,20 +59,11 @@ class _GameScreenState extends State<GameScreen> {
             focusNode: _focusNode,
             autofocus: true,
             onKey: _handleKeyEvent,
-            child: SafeArea(
-              child: Center(
-                child: SizedBox(
-                  width: cellSize * gridSize,
-                  height: cellSize * gridSize,
-                  child: CustomPaint(
-                    painter: GridPainter(
-                      gridSize: gridSize,
-                      cellSize: cellSize,
-                      isDarkMode: isDarkMode,
-                    ),
-                    child: _buildGridContent(gameProvider, cellSize, gameGridSize),
-                  ),
-                ),
+            child: Center(
+              child: SizedBox(
+                width: cellSize * gridSize,
+                height: cellSize * gridSize,
+                child: _buildGridContent(gameProvider, cellSize, gameGridSize),
               ),
             ),
           ),
@@ -99,179 +96,231 @@ class _GameScreenState extends State<GameScreen> {
   Widget _buildGridContent(GameProvider gameProvider, double cellSize, int gameGridSize) {
     final isDarkMode = gameProvider.isDarkMode;
     
-    // 计算游戏棋盘在28×28网格中的位置（居中）
-    final startRow = (gridSize - gameGridSize) ~/ 2;
-    final startCol = (gridSize - gameGridSize) ~/ 2;
+    // Calculate board position to center it
+    final boardStartCol = (gridSize - gameGridSize) ~/ 2;
+    final boardStartRow = (gridSize - gameGridSize) ~/ 2;
     
     return Stack(
       children: [
-        // 游戏棋盘
+        // Game board - centered
         Positioned(
-          left: startCol * cellSize,
-          top: startRow * cellSize,
-          child: SizedBox(
-            width: gameGridSize * cellSize,
-            height: gameGridSize * cellSize,
-            child: GameBoard(
-              onSwipe: (direction) {
-                gameProvider.move(direction);
-              },
-            ),
+          left: boardStartCol * cellSize,
+          top: boardStartRow * cellSize,
+          child: GameBoard(
+            onSwipe: (direction) => gameProvider.move(direction),
           ),
         ),
         
-        // 标题 - 左上角第一行
+        // Title - top left corner, centered in cell
         Positioned(
-          left: cellSize,
-          top: cellSize,
-          child: GridCell(
-            cellSize: cellSize,
-            isDarkMode: isDarkMode,
-            child: Text(
-              '道（Tao）',
-              style: TextStyle(
-                fontSize: cellSize * 0.6,
-                fontWeight: FontWeight.w100,
-                color: isDarkMode ? Colors.white : Colors.black,
-                fontFamily: 'OPPOSans',
-              ),
-            ),
-          ),
-        ),
-        
-        // 分数 - 右上角第一行
-        Positioned(
-          left: (gridSize - 8) * cellSize,
-          top: cellSize,
-          child: SizedBox(
-            width: 7 * cellSize,
+          left: 0,
+          top: 0,
+          child: Container(
+            width: cellSize,
             height: cellSize,
-            child: _buildScoreDisplay(gameProvider, cellSize),
-          ),
-        ),
-        
-        // 设置按钮 - 右上角第一行
-        Positioned(
-          left: (gridSize - 1) * cellSize,
-          top: cellSize,
-          child: GridCell(
-            cellSize: cellSize,
-            isDarkMode: isDarkMode,
-            child: IconButton(
-              onPressed: () => _showSettingsDialog(gameProvider),
-              icon: Icon(
-                Icons.settings,
-                size: cellSize * 0.5,
-                color: isDarkMode ? Colors.white : Colors.black,
+            child: Center(
+              child: Text(
+                '道',
+                style: TextStyle(
+                  fontSize: cellSize * 0.9,
+                  fontWeight: FontWeight.w100,
+                  color: isDarkMode ? Colors.white : Colors.black,
+                  fontFamily: 'OPPOSans',
+                ),
               ),
-              padding: EdgeInsets.zero,
             ),
           ),
         ),
         
-        // 重新开始按钮 - 左下角最后一行
+        // Score, Best Score, Settings - top right row (7 cells)
         Positioned(
-          left: cellSize,
-          top: (gridSize - 1) * cellSize,
-          child: GridCell(
-            cellSize: cellSize,
-            isDarkMode: isDarkMode,
-            child: IconButton(
-              onPressed: () => _showRestartDialog(gameProvider),
-              icon: Icon(
-                Icons.refresh,
-                size: cellSize * 0.5,
-                color: isDarkMode ? Colors.white : Colors.black,
+          right: 0,
+          top: 0,
+          child: Row(
+            children: [
+              // Score label
+              Container(
+                width: cellSize,
+                height: cellSize,
+                child: Center(
+                  child: Text(
+                    gameProvider.scoreText,
+                    style: TextStyle(
+                      fontSize: cellSize * 0.3,
+                      fontWeight: FontWeight.w100,
+                      color: isDarkMode ? Colors.white70 : Colors.black54,
+                      fontFamily: 'OPPOSans',
+                    ),
+                  ),
+                ),
               ),
-              padding: EdgeInsets.zero,
-            ),
+              // Score value
+              Container(
+                width: cellSize,
+                height: cellSize,
+                child: Center(
+                  child: Text(
+                    gameProvider.score.toString(),
+                    style: TextStyle(
+                      fontSize: cellSize * 0.4,
+                      fontWeight: FontWeight.w100,
+                      color: isDarkMode ? Colors.white : Colors.black,
+                      fontFamily: 'OPPOSans',
+                    ),
+                  ),
+                ),
+              ),
+              // Empty cell
+              Container(
+                width: cellSize,
+                height: cellSize,
+              ),
+              // Best score label
+              Container(
+                width: cellSize,
+                height: cellSize,
+                child: Center(
+                  child: Text(
+                    gameProvider.bestScoreText,
+                    style: TextStyle(
+                      fontSize: cellSize * 0.3,
+                      fontWeight: FontWeight.w100,
+                      color: isDarkMode ? Colors.white70 : Colors.black54,
+                      fontFamily: 'OPPOSans',
+                    ),
+                  ),
+                ),
+              ),
+              // Best score value
+              Container(
+                width: cellSize,
+                height: cellSize,
+                child: Center(
+                  child: Text(
+                    gameProvider.bestScore.toString(),
+                    style: TextStyle(
+                      fontSize: cellSize * 0.4,
+                      fontWeight: FontWeight.w100,
+                      color: isDarkMode ? Colors.white : Colors.black,
+                      fontFamily: 'OPPOSans',
+                    ),
+                  ),
+                ),
+              ),
+              // Empty cell
+              Container(
+                width: cellSize,
+                height: cellSize,
+              ),
+              // Settings button
+              Container(
+                width: cellSize,
+                height: cellSize,
+                child: Center(
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => _showSettingsDialog(gameProvider),
+                      child: Container(
+                        width: cellSize * 0.8,
+                        height: cellSize * 0.8,
+                        child: Icon(
+                          Icons.settings,
+                          size: cellSize * 0.5,
+                          color: isDarkMode ? Colors.white : Colors.black,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
         
-        // 新游戏按钮 - 右下角最后一行
+        // Restart and Auto Play buttons - bottom left row
         Positioned(
-          left: (gridSize - 1) * cellSize,
-          top: (gridSize - 1) * cellSize,
-          child: GridCell(
-            cellSize: cellSize,
-            isDarkMode: isDarkMode,
-            child: IconButton(
-              onPressed: () => _showRestartDialog(gameProvider),
-              icon: Icon(
-                Icons.play_arrow,
-                size: cellSize * 0.5,
-                color: isDarkMode ? Colors.white : Colors.black,
+          left: 0,
+          bottom: 0,
+          child: Row(
+            children: [
+              // Restart button
+              Container(
+                width: cellSize,
+                height: cellSize,
+                child: Center(
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => _showRestartDialog(gameProvider),
+                      child: Container(
+                        width: cellSize * 0.8,
+                        height: cellSize * 0.8,
+                        child: Icon(
+                          Icons.refresh,
+                          size: cellSize * 0.5,
+                          color: isDarkMode ? Colors.white : Colors.black,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               ),
-              padding: EdgeInsets.zero,
-            ),
+              // Auto play button
+              Container(
+                width: cellSize,
+                height: cellSize,
+                child: Center(
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => gameProvider.toggleAutoPlay(),
+                      child: Container(
+                        width: cellSize * 0.8,
+                        height: cellSize * 0.8,
+                        child: Icon(
+                          gameProvider.isAutoPlaying ? Icons.pause : Icons.play_arrow,
+                          size: cellSize * 0.5,
+                          color: isDarkMode ? Colors.white : Colors.black,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-      ],
-    );
-  }
-
-  Widget _buildScoreDisplay(GameProvider gameProvider, double cellSize) {
-    final isDarkMode = gameProvider.isDarkMode;
-    
-    return Row(
-      children: [
-        // 当前分数
-        Expanded(
-          child: GridCell(
-            cellSize: cellSize,
-            isDarkMode: isDarkMode,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  '分数',
-                  style: TextStyle(
-                    fontSize: cellSize * 0.2,
-                    fontWeight: FontWeight.w100,
-                    color: isDarkMode ? Colors.white70 : Colors.black54,
-                    fontFamily: 'OPPOSans',
+        
+        // Language toggle - bottom right corner
+        Positioned(
+          right: 0,
+          bottom: 0,
+          child: Container(
+            width: cellSize,
+            height: cellSize,
+            child: Center(
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => gameProvider.toggleLanguage(),
+                  child: Container(
+                    width: cellSize * 0.8,
+                    height: cellSize * 0.8,
+                    child: Center(
+                      child: Text(
+                        gameProvider.isEnglish ? '中' : 'Eng',
+                        style: TextStyle(
+                          fontSize: cellSize * 0.4,
+                          fontWeight: FontWeight.w100,
+                          color: isDarkMode ? Colors.white : Colors.black,
+                          fontFamily: 'OPPOSans',
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-                Text(
-                  gameProvider.score.toString(),
-                  style: TextStyle(
-                    fontSize: cellSize * 0.3,
-                    fontWeight: FontWeight.w100,
-                    color: isDarkMode ? Colors.white : Colors.black,
-                    fontFamily: 'OPPOSans',
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        // 最高分数
-        Expanded(
-          child: GridCell(
-            cellSize: cellSize,
-            isDarkMode: isDarkMode,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  '最高',
-                  style: TextStyle(
-                    fontSize: cellSize * 0.2,
-                    fontWeight: FontWeight.w100,
-                    color: isDarkMode ? Colors.white70 : Colors.black54,
-                    fontFamily: 'OPPOSans',
-                  ),
-                ),
-                Text(
-                  gameProvider.bestScore.toString(),
-                  style: TextStyle(
-                    fontSize: cellSize * 0.3,
-                    fontWeight: FontWeight.w100,
-                    color: isDarkMode ? Colors.white : Colors.black,
-                    fontFamily: 'OPPOSans',
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),
@@ -290,7 +339,7 @@ class _GameScreenState extends State<GameScreen> {
           borderRadius: BorderRadius.circular(0),
         ),
         title: Text(
-          '设置',
+          gameProvider.settingsText,
           style: TextStyle(
             color: isDarkMode ? Colors.white : Colors.black,
             fontFamily: 'OPPOSans',
@@ -301,7 +350,7 @@ class _GameScreenState extends State<GameScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              '网格尺寸',
+              gameProvider.gridSizeText,
               style: TextStyle(
                 color: isDarkMode ? Colors.white70 : Colors.black87,
                 fontFamily: 'OPPOSans',
@@ -312,10 +361,10 @@ class _GameScreenState extends State<GameScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _buildGridSizeButton(gameProvider, 4, '4×4', '专家'),
-                _buildGridSizeButton(gameProvider, 8, '8×8', '困难'),
-                _buildGridSizeButton(gameProvider, 16, '16×16', '中等'),
-                _buildGridSizeButton(gameProvider, 24, '24×24', '简单'),
+                _buildGridSizeButton(gameProvider, 4, '4×4', gameProvider.expertText),
+                _buildGridSizeButton(gameProvider, 8, '8×8', gameProvider.hardText),
+                _buildGridSizeButton(gameProvider, 16, '16×16', gameProvider.mediumText),
+                _buildGridSizeButton(gameProvider, 24, '24×24', gameProvider.easyText),
               ],
             ),
             const SizedBox(height: 16),
@@ -323,7 +372,7 @@ class _GameScreenState extends State<GameScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  '深色模式',
+                  gameProvider.darkModeText,
                   style: TextStyle(
                     color: isDarkMode ? Colors.white70 : Colors.black87,
                     fontFamily: 'OPPOSans',
@@ -345,7 +394,7 @@ class _GameScreenState extends State<GameScreen> {
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: Text(
-              '关闭',
+              gameProvider.closeText,
               style: TextStyle(
                 color: isDarkMode ? Colors.white : Colors.black,
                 fontFamily: 'OPPOSans',
@@ -364,33 +413,37 @@ class _GameScreenState extends State<GameScreen> {
     
     return Column(
       children: [
-        ElevatedButton(
-          onPressed: () {
-            gameProvider.setGridSize(size);
-            Navigator.of(context).pop();
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: isSelected 
-                ? (isDarkMode ? Colors.white : Colors.black)
-                : (isDarkMode ? Colors.black : Colors.white),
-            foregroundColor: isSelected 
-                ? (isDarkMode ? Colors.black : Colors.white)
-                : (isDarkMode ? Colors.white : Colors.black),
-            side: BorderSide(
-              color: isDarkMode ? Colors.white : Colors.black,
-              width: 1,
-            ),
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(0),
-            ),
-            minimumSize: const Size(60, 40),
-          ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontFamily: 'OPPOSans',
-              fontWeight: FontWeight.w100,
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              gameProvider.setGridSize(size);
+              Navigator.of(context).pop();
+            },
+            child: Container(
+              width: 60,
+              height: 40,
+              decoration: BoxDecoration(
+                color: isSelected 
+                    ? (isDarkMode ? Colors.white : Colors.black)
+                    : (isDarkMode ? Colors.grey[900] : Colors.grey[100]),
+                border: Border.all(
+                  color: isDarkMode ? Colors.white : Colors.black,
+                  width: 1,
+                ),
+              ),
+              child: Center(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    color: isSelected 
+                        ? (isDarkMode ? Colors.black : Colors.white)
+                        : (isDarkMode ? Colors.white : Colors.black),
+                    fontFamily: 'OPPOSans',
+                    fontWeight: FontWeight.w100,
+                  ),
+                ),
+              ),
             ),
           ),
         ),
@@ -419,7 +472,7 @@ class _GameScreenState extends State<GameScreen> {
           borderRadius: BorderRadius.circular(0),
         ),
         title: Text(
-          '重新开始',
+          gameProvider.restartText,
           style: TextStyle(
             color: isDarkMode ? Colors.white : Colors.black,
             fontFamily: 'OPPOSans',
@@ -427,7 +480,7 @@ class _GameScreenState extends State<GameScreen> {
           ),
         ),
         content: Text(
-          '确定要重新开始游戏吗？当前进度将丢失。',
+          gameProvider.restartConfirmText,
           style: TextStyle(
             color: isDarkMode ? Colors.white70 : Colors.black87,
             fontFamily: 'OPPOSans',
@@ -438,7 +491,7 @@ class _GameScreenState extends State<GameScreen> {
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: Text(
-              '取消',
+              gameProvider.cancelText,
               style: TextStyle(
                 color: Colors.grey,
                 fontFamily: 'OPPOSans',
@@ -452,7 +505,7 @@ class _GameScreenState extends State<GameScreen> {
               gameProvider.restart();
             },
             child: Text(
-              '确定',
+              gameProvider.confirmText,
               style: TextStyle(
                 color: isDarkMode ? Colors.white : Colors.black,
                 fontFamily: 'OPPOSans',
@@ -516,7 +569,7 @@ class GridPainter extends CustomPainter {
       ..strokeWidth = 1.0
       ..style = PaintingStyle.stroke;
 
-    // 绘制网格线
+    // 绘制网格线，延伸到屏幕边缘
     for (int i = 0; i <= gridSize; i++) {
       final position = i * cellSize;
       

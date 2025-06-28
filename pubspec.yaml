@@ -1,5 +1,5 @@
-name: wuxing_2048
-description: A traditional Chinese culture inspired puzzle game based on 2048 mechanics
+name: Tao
+description: A minimalist puzzle game inspired by 2048, featuring Chinese characters representing the five elements that merge into higher-level characters and ultimately into "道" (Dao).
 version: 1.0.0+1
 
 environment:

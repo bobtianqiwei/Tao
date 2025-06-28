@@ -77,7 +77,7 @@ class GameBoard extends StatelessWidget {
                   itemBuilder: (context, index) {
                     final row = index ~/ gridSize;
                     final col = index % gridSize;
-                    final tile = board[row][col];
+                    final tile = board[row][col] as Tile;
                     
                     return TileWidget(
                       tile: tile,
@@ -109,22 +109,22 @@ class BoardGridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = isDarkMode ? Colors.grey[700]! : Colors.grey[300]!
+      ..color = isDarkMode ? Colors.grey[800]! : Colors.grey[300]!
       ..strokeWidth = 1.0
       ..style = PaintingStyle.stroke;
 
-    // 绘制棋盘内部网格线
+    // Draw board internal grid lines
     for (int i = 1; i < gridSize; i++) {
       final position = i * cellSize;
       
-      // 垂直线
+      // Vertical lines
       canvas.drawLine(
         Offset(position, 0),
         Offset(position, size.height),
         paint,
       );
       
-      // 水平线
+      // Horizontal lines
       canvas.drawLine(
         Offset(0, position),
         Offset(size.width, position),
