@@ -136,37 +136,21 @@ class _GameScreenState extends State<GameScreen> {
           ),
         ),
         
-        // Score, Best Score, Settings - top right row (7 cells)
+        // Top right corner - Score, Best Score, and Settings
         Positioned(
           right: 0,
           top: 0,
           child: Row(
             children: [
-              // Score label
+              // Score (label + value in 2 cells)
               Container(
-                width: cellSize,
+                width: 2 * cellSize,
                 height: cellSize,
                 child: Center(
                   child: Text(
-                    gameProvider.scoreText,
+                    '${gameProvider.scoreText}: ${gameProvider.score}',
                     style: TextStyle(
-                      fontSize: cellSize * 0.3,
-                      fontWeight: FontWeight.w100,
-                      color: isDarkMode ? Colors.white70 : Colors.black54,
-                      fontFamily: 'OPPOSans',
-                    ),
-                  ),
-                ),
-              ),
-              // Score value
-              Container(
-                width: cellSize,
-                height: cellSize,
-                child: Center(
-                  child: Text(
-                    gameProvider.score.toString(),
-                    style: TextStyle(
-                      fontSize: cellSize * 0.4,
+                      fontSize: cellSize * 0.35,
                       fontWeight: FontWeight.w100,
                       color: isDarkMode ? Colors.white : Colors.black,
                       fontFamily: 'OPPOSans',
@@ -174,47 +158,21 @@ class _GameScreenState extends State<GameScreen> {
                   ),
                 ),
               ),
-              // Empty cell
+              // Best score (label + value in 2 cells)
               Container(
-                width: cellSize,
-                height: cellSize,
-              ),
-              // Best score label
-              Container(
-                width: cellSize,
+                width: 2 * cellSize,
                 height: cellSize,
                 child: Center(
                   child: Text(
-                    gameProvider.bestScoreText,
+                    '${gameProvider.bestScoreText}: ${gameProvider.bestScore}',
                     style: TextStyle(
-                      fontSize: cellSize * 0.3,
-                      fontWeight: FontWeight.w100,
-                      color: isDarkMode ? Colors.white70 : Colors.black54,
-                      fontFamily: 'OPPOSans',
-                    ),
-                  ),
-                ),
-              ),
-              // Best score value
-              Container(
-                width: cellSize,
-                height: cellSize,
-                child: Center(
-                  child: Text(
-                    gameProvider.bestScore.toString(),
-                    style: TextStyle(
-                      fontSize: cellSize * 0.4,
+                      fontSize: cellSize * 0.35,
                       fontWeight: FontWeight.w100,
                       color: isDarkMode ? Colors.white : Colors.black,
                       fontFamily: 'OPPOSans',
                     ),
                   ),
                 ),
-              ),
-              // Empty cell
-              Container(
-                width: cellSize,
-                height: cellSize,
               ),
               // Settings button
               Container(
