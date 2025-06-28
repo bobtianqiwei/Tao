@@ -302,7 +302,7 @@ class _GameScreenState extends State<GameScreen> {
                 style: TextStyle(
                   fontSize: cellSize * 0.35,
                   fontWeight: FontWeight.w100,
-                  color: isDarkMode ? Colors.white70 : Colors.black54,
+                  color: isDarkMode ? Colors.grey[600] : Colors.black54,
                   fontFamily: 'OPPOSans',
                 ),
               ),
@@ -695,8 +695,23 @@ class _GameScreenState extends State<GameScreen> {
     
     // 监听游戏状态变化
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      print('🔍 检查游戏状态: gameWon=${gameProvider.gameWon}, canContinue=${gameProvider.canContinue}');
       if (gameProvider.gameWon && !gameProvider.canContinue) {
-        _showVictoryDialog();
+        print('🎉 准备显示胜利对话框');
+        // 停止自动播放
+        if (gameProvider.isAutoPlaying) {
+          print('🛑 停止自动播放');
+          gameProvider.stopAutoPlay();
+        }
+        // 延迟显示对话框，确保状态已更新
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (mounted && gameProvider.gameWon && !gameProvider.canContinue) {
+            print('🎉 显示胜利对话框');
+            _showVictoryDialog();
+          } else {
+            print('❌ 胜利对话框显示条件不满足: mounted=$mounted, gameWon=${gameProvider.gameWon}, canContinue=${gameProvider.canContinue}');
+          }
+        });
       } else if (gameProvider.gameOver) {
         _showGameOverDialog();
       }

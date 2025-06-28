@@ -52,7 +52,7 @@ class Character {
         switch (level) {
           case 1: return Character.water2;
           case 2: return Character.water3;
-          case 3: return Character.wood1; // 水生木
+          case 3: return Character.dao; // 淼合成道，不再循环
         }
         break;
       case ElementType.dao:

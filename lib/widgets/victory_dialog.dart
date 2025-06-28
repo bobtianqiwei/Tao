@@ -17,7 +17,7 @@ class _VictoryDialogState extends State<VictoryDialog> {
   @override
   void initState() {
     super.initState();
-    _confettiController = ConfettiController(duration: const Duration(seconds: 3));
+    _confettiController = ConfettiController(duration: const Duration(seconds: 5));
     _confettiController.play();
   }
 
@@ -103,6 +103,7 @@ class _VictoryDialogState extends State<VictoryDialog> {
             );
           },
         ),
+        // 彩带效果 - 中心位置
         Align(
           alignment: Alignment.topCenter,
           child: ConfettiWidget(
@@ -113,7 +114,35 @@ class _VictoryDialogState extends State<VictoryDialog> {
             emissionFrequency: 0.05,
             numberOfParticles: 50,
             gravity: 0.05,
-            colors: const [Colors.black, Colors.grey],
+            colors: const [Colors.purple, Colors.blue, Colors.green, Colors.red, Colors.amber],
+          ),
+        ),
+        // 彩带效果 - 左侧
+        Align(
+          alignment: Alignment.topLeft,
+          child: ConfettiWidget(
+            confettiController: _confettiController,
+            blastDirection: pi / 4,
+            maxBlastForce: 3,
+            minBlastForce: 1,
+            emissionFrequency: 0.1,
+            numberOfParticles: 20,
+            gravity: 0.05,
+            colors: const [Colors.pink, Colors.orange, Colors.teal],
+          ),
+        ),
+        // 彩带效果 - 右侧
+        Align(
+          alignment: Alignment.topRight,
+          child: ConfettiWidget(
+            confettiController: _confettiController,
+            blastDirection: 3 * pi / 4,
+            maxBlastForce: 3,
+            minBlastForce: 1,
+            emissionFrequency: 0.1,
+            numberOfParticles: 20,
+            gravity: 0.05,
+            colors: const [Colors.indigo, Colors.cyan, Colors.lime],
           ),
         ),
       ],

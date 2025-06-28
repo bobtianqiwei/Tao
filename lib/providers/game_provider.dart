@@ -141,6 +141,8 @@ class GameProvider extends ChangeNotifier {
     if (_gameOver && !_canContinue) return false;
     
     bool moved = false;
+    bool victoryDetected = false; // 添加胜利检测标志
+    
     switch (direction) {
       case Direction.up:
         moved = _moveUp();
@@ -217,6 +219,18 @@ class GameProvider extends ChangeNotifier {
           newColumn[i] = mergedTile.copyWith(row: i, col: col);
           newColumn[i-1] = Tile(row: i-1, col: col);
           _score += _calculateMergeScore(mergedTile);
+          
+          // 立即检查是否生成了"道"
+          if (mergedTile.character?.elementType == ElementType.dao) {
+            print('🎉 向下移动中检测到道字！位置: ($i, $col)');
+            print('🎉 道字信息: ${mergedTile.character?.character}, ${mergedTile.character?.elementType}');
+            _gameWon = true;
+            _canContinue = false;
+            if (_score > _bestScore) {
+              _bestScore = _score;
+            }
+            print('🎉 设置胜利状态: _gameWon=$_gameWon, _canContinue=$_canContinue');
+          }
         }
       }
       
@@ -256,6 +270,16 @@ class GameProvider extends ChangeNotifier {
           newRow[i] = mergedTile.copyWith(row: row, col: i);
           newRow[i+1] = Tile(row: row, col: i+1);
           _score += _calculateMergeScore(mergedTile);
+          
+          // 立即检查是否生成了"道"
+          if (mergedTile.character?.elementType == ElementType.dao) {
+            print('🎉 向左移动中检测到道字！位置: ($row, $i)');
+            _gameWon = true;
+            _canContinue = false;
+            if (_score > _bestScore) {
+              _bestScore = _score;
+            }
+          }
         }
       }
       
@@ -295,6 +319,16 @@ class GameProvider extends ChangeNotifier {
           newRow[i] = mergedTile.copyWith(row: row, col: i);
           newRow[i-1] = Tile(row: row, col: i-1);
           _score += _calculateMergeScore(mergedTile);
+          
+          // 立即检查是否生成了"道"
+          if (mergedTile.character?.elementType == ElementType.dao) {
+            print('🎉 向右移动中检测到道字！位置: ($row, $i)');
+            _gameWon = true;
+            _canContinue = false;
+            if (_score > _bestScore) {
+              _bestScore = _score;
+            }
+          }
         }
       }
       
@@ -321,6 +355,18 @@ class GameProvider extends ChangeNotifier {
         final mergedTile = tiles[i].mergeWith(tiles[i + 1]);
         result.add(mergedTile);
         _score += _calculateMergeScore(mergedTile);
+        
+        // 立即检查是否生成了"道"
+        if (mergedTile.character?.elementType == ElementType.dao) {
+          print('🎉 向上移动中检测到道字！');
+          _gameWon = true;
+          _canContinue = false;
+          if (_score > _bestScore) {
+            _bestScore = _score;
+          }
+          notifyListeners();
+        }
+        
         i += 2;
       } else {
         result.add(tiles[i].copyWith(isNew: false, isMerged: false));
@@ -348,11 +394,13 @@ class GameProvider extends ChangeNotifier {
     for (int row = 0; row < _gridSize; row++) {
       for (int col = 0; col < _gridSize; col++) {
         if (_board[row][col].character?.elementType == ElementType.dao) {
+          print('🎉 检测到道字！位置: ($row, $col)'); // 调试信息
           _gameWon = true;
-          _canContinue = true;
+          _canContinue = false; // 初始设置为false，让胜利对话框显示
           if (_score > _bestScore) {
             _bestScore = _score;
           }
+          notifyListeners(); // 立即通知UI更新
           return;
         }
       }
@@ -412,6 +460,7 @@ class GameProvider extends ChangeNotifier {
   // 继续游戏（在获胜后）
   void continueGame() {
     _canContinue = true;
+    _gameWon = false; // 重置胜利状态，允许继续游戏
     notifyListeners();
   }
 
@@ -460,7 +509,7 @@ class GameProvider extends ChangeNotifier {
   String get mediumText => getText('中等', 'Medium');
   String get easyText => getText('简单', 'Easy');
   String get restartConfirmText => getText('确定要重新开始游戏吗？当前进度将丢失。', 'Are you sure you want to restart? Current progress will be lost.');
-  String get developerText => getText('开发者：Bob Tianqi Wei', 'Developer: Bob Tianqi Wei');
+  String get developerText => getText('开发者：Bob Tianqi Wei\ngithub.com/bobtianqiwei', 'Developer: Bob Tianqi Wei\ngithub.com/bobtianqiwei');
 
   // Auto play functionality
   void toggleAutoPlay() {
@@ -477,6 +526,12 @@ class GameProvider extends ChangeNotifier {
     _isAutoPlaying = true;
     _autoPlayTimer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
       if (!_isAutoPlaying || _gameOver) {
+        stopAutoPlay();
+        return;
+      }
+      
+      // Check for victory before making next move
+      if (_gameWon && !_canContinue) {
         stopAutoPlay();
         return;
       }
@@ -501,6 +556,12 @@ class GameProvider extends ChangeNotifier {
       
       if (nextMove != null) {
         move(nextMove);
+        
+        // Check for victory after each move
+        if (_gameWon && !_canContinue) {
+          stopAutoPlay();
+          return;
+        }
       } else {
         stopAutoPlay();
       }
