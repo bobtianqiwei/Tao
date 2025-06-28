@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'dart:async';
 import '../providers/game_provider.dart';
 import '../widgets/game_board.dart';
 import '../widgets/grid_cell.dart';
@@ -18,6 +19,9 @@ class GameScreen extends StatefulWidget {
 class _GameScreenState extends State<GameScreen> {
   final FocusNode _focusNode = FocusNode();
   static const int gridSize = 28; // 28×28网格
+  Timer? _autoPlayTimer;
+  bool _showMLMenu = false;
+  Timer? _menuHideTimer;
 
   @override
   void initState() {
@@ -324,6 +328,212 @@ class _GameScreenState extends State<GameScreen> {
             ),
           ),
         ),
+        
+        // Developer info - bottom row
+        Positioned(
+          right: 0,
+          bottom: 0,
+          child: Container(
+            width: 6 * cellSize,
+            height: cellSize,
+            child: Center(
+              child: Text(
+                gameProvider.developerText,
+                style: TextStyle(
+                  fontSize: cellSize * 0.35,
+                  fontWeight: FontWeight.w100,
+                  color: isDarkMode ? Colors.white70 : Colors.black54,
+                  fontFamily: 'OPPOSans',
+                ),
+              ),
+            ),
+          ),
+        ),
+        
+        // Auto play mode buttons - bottom left area
+        Positioned(
+          left: 2 * cellSize,
+          bottom: 0,
+          child: Row(
+            children: [
+              // R (Random) mode button
+              Container(
+                width: cellSize,
+                height: cellSize,
+                decoration: BoxDecoration(
+                  color: gameProvider.autoPlayMode == AutoPlayMode.random
+                      ? (isDarkMode ? Colors.white : Colors.black)
+                      : Colors.transparent,
+                ),
+                child: Center(
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => gameProvider.setAutoPlayMode(AutoPlayMode.random),
+                      child: Container(
+                        width: cellSize * 0.8,
+                        height: cellSize * 0.8,
+                        child: Center(
+                          child: Text(
+                            'R',
+                            style: TextStyle(
+                              fontSize: cellSize * 0.4,
+                              fontWeight: FontWeight.w100,
+                              color: gameProvider.autoPlayMode == AutoPlayMode.random
+                                  ? (isDarkMode ? Colors.black : Colors.white)
+                                  : (isDarkMode ? Colors.white : Colors.black),
+                              fontFamily: 'OPPOSans',
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              // ML mode button
+              MouseRegion(
+                onEnter: (_) => _showMLModelMenu(),
+                onExit: (_) => _hideMLModelMenu(),
+                child: GestureDetector(
+                  onTap: () => gameProvider.setAutoPlayMode(AutoPlayMode.ml),
+                  child: Container(
+                    width: cellSize,
+                    height: cellSize,
+                    decoration: BoxDecoration(
+                      color: gameProvider.autoPlayMode == AutoPlayMode.ml
+                          ? (isDarkMode ? Colors.white : Colors.black)
+                          : Colors.transparent,
+                    ),
+                    child: Center(
+                      child: Text(
+                        'ML',
+                        style: TextStyle(
+                          fontSize: cellSize * 0.4,
+                          fontWeight: FontWeight.w100,
+                          color: gameProvider.autoPlayMode == AutoPlayMode.ml
+                              ? (isDarkMode ? Colors.black : Colors.white)
+                              : (isDarkMode ? Colors.white : Colors.black),
+                          fontFamily: 'OPPOSans',
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              // ML model name display (3 cells)
+              MouseRegion(
+                onEnter: (_) => _showMLModelMenu(),
+                onExit: (_) => _hideMLModelMenu(),
+                child: GestureDetector(
+                  onTap: () {
+                    gameProvider.setAutoPlayMode(AutoPlayMode.ml);
+                  },
+                  child: Container(
+                    width: 3 * cellSize,
+                    height: cellSize,
+                    decoration: BoxDecoration(
+                      color: gameProvider.autoPlayMode == AutoPlayMode.ml
+                          ? (isDarkMode ? Colors.grey[800] : Colors.grey[200])
+                          : Colors.transparent,
+                    ),
+                    child: Center(
+                      child: Text(
+                        _getMLModelName(gameProvider.selectedMLModel),
+                        style: TextStyle(
+                          fontSize: cellSize * 0.35,
+                          fontWeight: FontWeight.w100,
+                          color: isDarkMode ? Colors.white70 : Colors.black54,
+                          fontFamily: 'OPPOSans',
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        
+        // ML Model Selection Menu
+        Positioned(
+          left: 3 * cellSize,
+          bottom: 1 * cellSize,
+          child: AnimatedOpacity(
+            opacity: _showMLMenu ? 1.0 : 0.0,
+            duration: const Duration(milliseconds: 200),
+            child: ClipRect(
+              child: MouseRegion(
+                onEnter: (_) => _resetMenuHideTimer(),
+                onExit: (_) => _hideMLModelMenu(),
+                child: Container(
+                  width: 8 * cellSize,
+                  height: (MLModel.values.length + 1) * cellSize - 2,
+                  decoration: BoxDecoration(
+                    color: isDarkMode ? Colors.black : Colors.white,
+                    border: Border.all(
+                      color: isDarkMode ? Colors.white : Colors.black,
+                      width: 1,
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      // Menu title
+                      Container(
+                        height: cellSize - 1,
+                        child: Center(
+                          child: Text(
+                            'ML Models',
+                            style: TextStyle(
+                              fontSize: cellSize * 0.4,
+                              fontWeight: FontWeight.w300,
+                              color: isDarkMode ? Colors.white : Colors.black,
+                              fontFamily: 'OPPOSans',
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Model options
+                      ...MLModel.values.map((model) {
+                        final isSelected = gameProvider.selectedMLModel == model;
+                        final modelName = _getMLModelName(model);
+                        
+                        return MouseRegion(
+                          onEnter: (_) => _resetMenuHideTimer(),
+                          child: GestureDetector(
+                            onTap: () => _selectMLModel(model),
+                            child: Container(
+                              width: double.infinity,
+                              height: cellSize - 1,
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? (isDarkMode ? Colors.white : Colors.black)
+                                    : Colors.transparent,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  modelName,
+                                  style: TextStyle(
+                                    fontSize: cellSize * 0.35,
+                                    fontWeight: FontWeight.w100,
+                                    color: isSelected
+                                        ? (isDarkMode ? Colors.black : Colors.white)
+                                        : (isDarkMode ? Colors.white : Colors.black),
+                                    fontFamily: 'OPPOSans',
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -547,6 +757,57 @@ class _GameScreenState extends State<GameScreen> {
       barrierDismissible: false,
       builder: (context) => const GameOverDialog(),
     );
+  }
+
+  void _showMLModelMenu() {
+    setState(() {
+      _showMLMenu = true;
+    });
+    _resetMenuHideTimer();
+  }
+
+  void _hideMLModelMenu() {
+    _menuHideTimer?.cancel();
+    _menuHideTimer = Timer(const Duration(milliseconds: 300), () {
+      if (mounted) {
+        setState(() {
+          _showMLMenu = false;
+        });
+      }
+    });
+  }
+
+  void _resetMenuHideTimer() {
+    _menuHideTimer?.cancel();
+  }
+
+  void _selectMLModel(MLModel model) {
+    final gameProvider = Provider.of<GameProvider>(context, listen: false);
+    gameProvider.setMLModel(model);
+    _hideMLModelMenu();
+  }
+
+  String _getMLModelName(MLModel model) {
+    switch (model) {
+      case MLModel.heuristic:
+        return 'Heuristic';
+      case MLModel.corner:
+        return 'Corner';
+      case MLModel.snake:
+        return 'Snake';
+      case MLModel.edge:
+        return 'Edge';
+      case MLModel.center:
+        return 'Center';
+      case MLModel.random:
+        return 'Random';
+      case MLModel.greedy:
+        return 'Greedy';
+      case MLModel.conservative:
+        return 'Conservative';
+      case MLModel.advanced:
+        return 'Advanced';
+    }
   }
 }
 

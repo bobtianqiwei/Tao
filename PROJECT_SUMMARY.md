@@ -1,113 +1,115 @@
 # Tao (道) - Project Summary
 
 ## Overview
-Tao is a minimalist puzzle game inspired by 2048, featuring Chinese characters representing the five elements that merge into higher-level characters and ultimately into "道" (Dao). The game combines traditional Chinese philosophy with modern puzzle mechanics.
+Tao is a minimalist puzzle game inspired by 2048, featuring Chinese characters representing the five elements (五行) that merge into higher-level characters and ultimately into "道" (Dao). The game combines traditional Chinese philosophy with modern puzzle mechanics and AI-powered gameplay.
 
-## Key Features
-- **Minimalist Design**: Black and white interface with ultra-thin typography
-- **Five Elements System**: Wood (木), Fire (火), Earth (土), Metal (金), Water (水)
-- **Progressive Merging**: Characters evolve through multiple levels
-- **Multiple Grid Sizes**: 4×4 to 24×24 difficulty levels
-- **Auto Play**: AI with random moves for demonstration
-- **Bilingual Support**: Chinese and English interfaces
-- **Cross-Platform**: Web, mobile, and desktop support
+## Developer Information
 
-## Technical Implementation
+- **Developer**: Bob Tianqi Wei
+- **Development Time**: June 2025
 - **Framework**: Flutter with Dart
 - **Architecture**: Provider pattern for state management
-- **Grid System**: 28×28 adaptive layout
-- **Font**: OPPO Sans (ultra-thin weight)
-- **UI**: No shadows, rounded corners, or decorative elements
 
-## Game Mechanics
-Players merge identical Chinese characters to create higher-level elements following the traditional five elements cycle. The ultimate goal is to reach the "道" character, representing the highest level of achievement.
+## Core Features
 
-## Development Status
-- ✅ Core game logic implemented
-- ✅ UI layout and styling complete
-- ✅ Auto play functionality added
-- ✅ Bilingual support implemented
-- ✅ Cross-platform compatibility
-- ✅ Responsive design
+### Game Mechanics
+- **Five Elements System**: Merge characters representing 金、木、水、火、土
+- **Progressive Merging**: Characters evolve through multiple levels to reach "道"
+- **Multiple Grid Sizes**: 4×4 (expert), 8×8 (hard), 16×16 (medium), 24×24 (easy)
+- **Score System**: Points awarded for successful merges
 
-## Technical Architecture
+### User Interface
+- **Minimalist Design**: Clean black and white interface with OPPO Sans font
+- **28×28 Grid System**: Adaptive layout with UI elements in outer positions
+- **Responsive Design**: Scales across different screen sizes
+- **Theme Support**: Auto dark/light mode detection
+- **Bilingual Interface**: English and Chinese language support
 
-### Project Structure
-```
-lib/
-├── main.dart                 # App entry point
-├── models/                   # Data models
-│   ├── character.dart        # Chinese character model
-│   └── tile.dart            # Game tile model
-├── providers/               # State management
-│   └── game_provider.dart   # Game logic and state
-├── screens/                 # UI screens
-│   └── game_screen.dart     # Main game interface
-└── widgets/                 # Reusable components
-    ├── game_board.dart      # Game board with grid
-    ├── tile_widget.dart     # Individual tile component
-    ├── grid_cell.dart       # Grid cell component
-    ├── score_board.dart     # Score display
-    ├── victory_dialog.dart  # Victory dialog
-    └── game_over_dialog.dart # Game over dialog
-```
+### AI and Autoplay
+- **Random Autoplay**: Simple random direction selection
+- **ML Models**: Multiple AI models for intelligent gameplay
+  - **Heuristic**: Basic strategic evaluation
+  - **Corner**: Corner-focused strategy
+  - **Snake**: Snake pattern optimization
+  - **Advanced**: Comprehensive evaluation with risk assessment
+- **Model Selection**: Interactive menu for choosing ML models
+
+## Technical Implementation
+
+### Architecture
+- **State Management**: Provider pattern for reactive UI updates
+- **Widget Structure**: Modular components for maintainability
+- **Event Handling**: Keyboard controls and mouse interactions
+- **Animation System**: Smooth transitions and visual feedback
 
 ### Key Components
+- **GameProvider**: Central state management and game logic
+- **Character Model**: Character definitions and merging rules
+- **Game Board**: 28×28 grid rendering with adaptive scaling
+- **ML Engine**: AI models for intelligent move prediction
 
-#### Game Provider
-- Manages game state (board, score, game over status)
-- Handles tile movement and merging logic
-- Supports multiple grid sizes
-- Theme mode management
-- Data persistence
+### Performance Optimizations
+- **Efficient Rendering**: Optimized grid cell rendering
+- **Memory Management**: Proper disposal of resources
+- **Smooth Animations**: 60fps animations with proper timing
 
-#### Grid System
-- **Master Grid**: 27×27 adaptive grid system
-- **Game Board**: Dynamically centered within master grid
-- **Grid Lines**: 1px light gray lines for visual separation
-- **Responsive**: Automatically scales to screen dimensions
+## Development Highlights
 
-#### Tile System
-- **Background**: Pure white/black (no colored backgrounds)
-- **Text**: Colored Chinese characters with ultra-thin font
-- **Animation**: Scale and opacity animations for new/merged tiles
-- **Sizing**: Text fills entire tile with minimal margins
+### UI/UX Design
+- **Minimalist Aesthetic**: Clean lines, no shadows or rounded corners
+- **Typography Focus**: OPPO Sans font for elegant character display
+- **Intuitive Controls**: Arrow keys and click interactions
+- **Visual Feedback**: Clear indication of game state and selections
 
-## Development Challenges Solved
+### AI Integration
+- **Multiple Models**: Different strategies for varied gameplay
+- **Real-time Evaluation**: Fast move calculation for smooth autoplay
+- **Extensible Architecture**: Easy to add new ML models
+- **User Control**: Manual selection and comparison of models
 
-### 1. Array Index Errors
-- **Issue**: Index out of range errors in movement logic
-- **Solution**: Fixed array indexing in `_moveDown()` and `_moveRight()` methods
+### Cross-Platform Support
+- **Web Optimization**: Chrome and modern browser support
+- **Mobile Ready**: Responsive design for mobile devices
+- **Desktop Compatible**: Full keyboard and mouse support
 
-### 2. Layout Overflow
-- **Issue**: Content too large for screen
-- **Solution**: Implemented adaptive 27×27 grid system with automatic scaling
+## Project Structure
 
-### 3. Theme Consistency
-- **Issue**: Dark mode not properly applied to game board
-- **Solution**: Updated tile backgrounds and grid colors to respect theme
-
-### 4. Grid Alignment
-- **Issue**: UI elements not properly aligned
-- **Solution**: Created custom grid system with precise positioning
-
-## Performance Optimizations
-
-- **Efficient Rendering**: Custom painters for grid lines
-- **Minimal Rebuilds**: Provider pattern for targeted updates
-- **Responsive Design**: Single codebase for all platforms
-- **Memory Management**: Proper disposal of animation controllers
+```
+Tao/
+├── lib/
+│   ├── main.dart              # App entry point and theme setup
+│   ├── models/
+│   │   ├── character.dart     # Character definitions and merging logic
+│   │   └── tile.dart         # Tile data model
+│   ├── providers/
+│   │   └── game_provider.dart # Game state, logic, and ML models
+│   ├── screens/
+│   │   └── game_screen.dart   # Main game interface and UI layout
+│   └── widgets/
+│       ├── game_board.dart    # Game board rendering
+│       ├── game_over_dialog.dart # Game over dialog
+│       └── grid_cell.dart     # Individual tile widget
+├── assets/
+│   └── fonts/
+│       └── OPPO Sans 4.0.ttf  # Custom font for Chinese characters
+├── web/                       # Web-specific assets and configuration
+└── pubspec.yaml              # Dependencies and project configuration
+```
 
 ## Future Enhancements
 
-- **Undo Functionality**: Add move history and undo capability
-- **Sound Effects**: Audio feedback for tile movements
-- **Achievements**: Unlockable achievements system
-- **Statistics**: Detailed game statistics and analytics
-- **Multiplayer**: Online leaderboards and challenges
+- **Additional ML Models**: More sophisticated AI strategies
+- **Sound Effects**: Audio feedback for interactions
+- **Statistics Tracking**: Detailed game analytics
+- **Multiplayer Support**: Competitive gameplay features
+- **Custom Themes**: Additional visual themes and color schemes
 
-## Conclusion
+## Technical Achievements
 
-This project successfully demonstrates Flutter's capabilities for creating cross-platform games with complex UI requirements. The 27×27 grid system provides a solid foundation for future enhancements while maintaining excellent performance and user experience across all platforms.
+- **Efficient Grid System**: 28×28 adaptive layout with precise positioning
+- **Advanced AI Models**: Multiple ML strategies with different approaches
+- **Smooth Performance**: Optimized rendering and state management
+- **Cross-Platform Compatibility**: Consistent experience across devices
+- **Modern Flutter Practices**: Latest Flutter features and best practices
 
-The minimalist design philosophy combined with traditional Chinese cultural elements creates a unique gaming experience that appeals to both casual players and those interested in Chinese philosophy. 
+This project demonstrates advanced Flutter development skills, AI integration, and thoughtful game design principles while maintaining a clean, minimalist aesthetic that emphasizes the philosophical theme of the game. 

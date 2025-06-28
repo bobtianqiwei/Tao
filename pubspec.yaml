@@ -1,6 +1,8 @@
 name: Tao
-description: A minimalist puzzle game inspired by 2048, featuring Chinese characters representing the five elements that merge into higher-level characters and ultimately into "道" (Dao).
+description: A minimalist puzzle game inspired by 2048, featuring Chinese characters representing the five elements that merge into higher-level characters and ultimately into "道" (Dao). Includes multiple ML models for intelligent autoplay.
 version: 1.0.0+1
+author: Bob Tianqi Wei
+homepage: https://github.com/bobtianqiwei/tao
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
