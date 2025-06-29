@@ -35,6 +35,8 @@ class GameProvider extends ChangeNotifier {
   bool _isAutoPlaying = false;
   Timer? _autoPlayTimer;
   bool _hasManualThemeSetting = false;
+  bool _showGlowEffect = false; // Add glow effect state
+  Timer? _glowTimer; // Timer for glow effect
 
   // Getters
   List<List<Tile>> get board => _board;
@@ -47,6 +49,7 @@ class GameProvider extends ChangeNotifier {
   bool get gameWon => _gameWon;
   bool get canContinue => _canContinue;
   bool get isAutoPlaying => _isAutoPlaying;
+  bool get showGlowEffect => _showGlowEffect; // Add getter for glow effect
 
   GameProvider() {
     _loadGame();
@@ -223,13 +226,15 @@ class GameProvider extends ChangeNotifier {
           // 立即检查是否生成了"道"
           if (mergedTile.character?.elementType == ElementType.dao) {
             print('🎉 向下移动中检测到道字！位置: ($i, $col)');
-            print('🎉 道字信息: ${mergedTile.character?.character}, ${mergedTile.character?.elementType}');
+            print('🎉 道字信息: $mergedTile.character?.character, $mergedTile.character?.elementType');
             _gameWon = true;
             _canContinue = false;
             if (_score > _bestScore) {
               _bestScore = _score;
             }
             print('🎉 设置胜利状态: _gameWon=$_gameWon, _canContinue=$_canContinue');
+            startGlowEffect(); // Start glow effect
+            notifyListeners(); // 立即通知UI更新
           }
         }
       }
@@ -279,6 +284,8 @@ class GameProvider extends ChangeNotifier {
             if (_score > _bestScore) {
               _bestScore = _score;
             }
+            startGlowEffect(); // Start glow effect
+            notifyListeners(); // 立即通知UI更新
           }
         }
       }
@@ -328,6 +335,8 @@ class GameProvider extends ChangeNotifier {
             if (_score > _bestScore) {
               _bestScore = _score;
             }
+            startGlowEffect(); // Start glow effect
+            notifyListeners(); // 立即通知UI更新
           }
         }
       }
@@ -364,6 +373,7 @@ class GameProvider extends ChangeNotifier {
           if (_score > _bestScore) {
             _bestScore = _score;
           }
+          startGlowEffect(); // Start glow effect
           notifyListeners();
         }
         
@@ -400,6 +410,7 @@ class GameProvider extends ChangeNotifier {
           if (_score > _bestScore) {
             _bestScore = _score;
           }
+          startGlowEffect(); // Start glow effect
           notifyListeners(); // 立即通知UI更新
           return;
         }
@@ -461,6 +472,27 @@ class GameProvider extends ChangeNotifier {
   void continueGame() {
     _canContinue = true;
     _gameWon = false; // 重置胜利状态，允许继续游戏
+    notifyListeners();
+  }
+
+  // 启动发光效果
+  void startGlowEffect() {
+    _showGlowEffect = true;
+    notifyListeners();
+    
+    // 120秒后开始逐渐消失
+    _glowTimer?.cancel();
+    _glowTimer = Timer(const Duration(seconds: 120), () {
+      _showGlowEffect = false;
+      notifyListeners();
+    });
+  }
+
+  // 停止发光效果
+  void stopGlowEffect() {
+    _showGlowEffect = false;
+    _glowTimer?.cancel();
+    _glowTimer = null;
     notifyListeners();
   }
 

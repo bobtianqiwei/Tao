@@ -82,9 +82,26 @@ class GameBoard extends StatelessWidget {
                     return TileWidget(
                       tile: tile,
                       size: tileSize,
+                      showGlow: false, // Disable glow in tile widget
                     );
                   },
                 ),
+                // 发光效果覆盖层 - 放在最顶层
+                if (gameProvider.showGlowEffect)
+                  ...board.asMap().entries.expand((rowEntry) {
+                    final row = rowEntry.key;
+                    return rowEntry.value.asMap().entries.where((colEntry) {
+                      final tile = colEntry.value;
+                      return tile.character?.elementType.toString() == 'ElementType.dao';
+                    }).map((colEntry) {
+                      final col = colEntry.key;
+                      return Positioned(
+                        left: col * cellSize,
+                        top: row * cellSize,
+                        child: _GlowOverlay(size: cellSize),
+                      );
+                    });
+                  }),
               ],
             ),
           ),
@@ -135,4 +152,62 @@ class BoardGridPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
+// 发光效果覆盖层组件
+class _GlowOverlay extends StatefulWidget {
+  final double size;
+  
+  const _GlowOverlay({required this.size});
+  
+  @override
+  State<_GlowOverlay> createState() => _GlowOverlayState();
+}
+
+class _GlowOverlayState extends State<_GlowOverlay> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _glowAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 120), // 2 minutes
+    );
+    _glowAnimation = TweenSequence([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.0), weight: 60), // 0-60s full glow
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.0), weight: 60), // 60-120s fade out
+    ]).animate(_controller);
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _glowAnimation,
+      builder: (context, child) {
+        return Container(
+          width: widget.size,
+          height: widget.size,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(4),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.white.withOpacity(_glowAnimation.value * 0.8),
+                blurRadius: 32 * _glowAnimation.value + 8,
+                spreadRadius: 8 * _glowAnimation.value + 2,
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 } 

@@ -7,7 +7,7 @@ import '../widgets/game_board.dart';
 import '../widgets/grid_cell.dart';
 import '../widgets/score_board.dart';
 import '../widgets/game_over_dialog.dart';
-import '../widgets/victory_dialog.dart';
+import '../widgets/full_screen_confetti.dart';
 
 class GameScreen extends StatefulWidget {
   const GameScreen({super.key});
@@ -22,6 +22,8 @@ class _GameScreenState extends State<GameScreen> {
   Timer? _autoPlayTimer;
   bool _showMLMenu = false;
   Timer? _menuHideTimer;
+  bool _showConfetti = false;
+  bool _hasShownConfetti = false; // 防止重复触发
 
   @override
   void initState() {
@@ -51,6 +53,32 @@ class _GameScreenState extends State<GameScreen> {
           gameProvider.setSystemTheme(systemIsDark);
         });
         
+        // 检查胜利状态并触发彩带
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (gameProvider.gameWon && !gameProvider.canContinue && !_hasShownConfetti) {
+            print('🎉 检测到胜利，立即触发彩带');
+            // 停止自动播放
+            if (gameProvider.isAutoPlaying) {
+              gameProvider.stopAutoPlay();
+            }
+            // 立即触发彩带效果
+            setState(() {
+              _showConfetti = true;
+              _hasShownConfetti = true;
+            });
+            // 120秒后自动隐藏彩带
+            Future.delayed(const Duration(seconds: 120), () {
+              if (mounted) {
+                setState(() {
+                  _showConfetti = false;
+                });
+              }
+            });
+          } else if (gameProvider.gameOver) {
+            _showGameOverDialog();
+          }
+        });
+        
         // Calculate cell size to fit screen
         final screenSize = MediaQuery.of(context).size;
         final cellSize = (screenSize.width < screenSize.height 
@@ -59,17 +87,23 @@ class _GameScreenState extends State<GameScreen> {
         
         return Scaffold(
           backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          body: RawKeyboardListener(
-            focusNode: _focusNode,
-            autofocus: true,
-            onKey: _handleKeyEvent,
-            child: Center(
-              child: SizedBox(
-                width: cellSize * gridSize,
-                height: cellSize * gridSize,
-                child: _buildGridContent(gameProvider, cellSize, gameGridSize),
+          body: Stack(
+            children: [
+              RawKeyboardListener(
+                focusNode: _focusNode,
+                autofocus: true,
+                onKey: _handleKeyEvent,
+                child: Center(
+                  child: SizedBox(
+                    width: cellSize * gridSize,
+                    height: cellSize * gridSize,
+                    child: _buildGridContent(gameProvider, cellSize, gameGridSize),
+                  ),
+                ),
               ),
-            ),
+              // 全屏彩带 - 放在最顶层
+              FullScreenConfetti(show: _showConfetti),
+            ],
           ),
         );
       },
@@ -672,6 +706,10 @@ class _GameScreenState extends State<GameScreen> {
           TextButton(
             onPressed: () {
               Navigator.of(context).pop();
+              setState(() {
+                _showConfetti = false;
+                _hasShownConfetti = false; // 重置标志
+              });
               gameProvider.restart();
             },
             child: Text(
@@ -685,52 +723,6 @@ class _GameScreenState extends State<GameScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final gameProvider = Provider.of<GameProvider>(context, listen: false);
-    
-    // 监听游戏状态变化
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      print('🔍 检查游戏状态: gameWon=${gameProvider.gameWon}, canContinue=${gameProvider.canContinue}');
-      if (gameProvider.gameWon && !gameProvider.canContinue) {
-        print('🎉 准备显示胜利对话框');
-        // 停止自动播放
-        if (gameProvider.isAutoPlaying) {
-          print('🛑 停止自动播放');
-          gameProvider.stopAutoPlay();
-        }
-        // 延迟显示对话框，确保状态已更新
-        Future.delayed(const Duration(milliseconds: 100), () {
-          if (mounted && gameProvider.gameWon && !gameProvider.canContinue) {
-            print('🎉 显示胜利对话框');
-            _showVictoryDialog();
-          } else {
-            print('❌ 胜利对话框显示条件不满足: mounted=$mounted, gameWon=${gameProvider.gameWon}, canContinue=${gameProvider.canContinue}');
-          }
-        });
-      } else if (gameProvider.gameOver) {
-        _showGameOverDialog();
-      }
-    });
-  }
-
-  void _showVictoryDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const VictoryDialog(),
-    );
-  }
-
-  void _showGameOverDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const GameOverDialog(),
     );
   }
 
@@ -783,6 +775,13 @@ class _GameScreenState extends State<GameScreen> {
       case MLModel.advanced:
         return 'Advanced';
     }
+  }
+
+  void _showGameOverDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => const GameOverDialog(),
+    );
   }
 }
 
