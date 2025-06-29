@@ -6,7 +6,6 @@ import '../providers/game_provider.dart';
 import '../widgets/game_board.dart';
 import '../widgets/grid_cell.dart';
 import '../widgets/score_board.dart';
-import '../widgets/game_over_dialog.dart';
 import '../widgets/full_screen_confetti.dart';
 
 class GameScreen extends StatefulWidget {
@@ -69,8 +68,6 @@ class _GameScreenState extends State<GameScreen> {
                 });
               }
             });
-          } else if (gameProvider.gameOver) {
-            _showGameOverDialog();
           }
         });
         
@@ -770,13 +767,6 @@ class _GameScreenState extends State<GameScreen> {
       case MLModel.advanced:
         return 'Advanced';
     }
-  }
-
-  void _showGameOverDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => const GameOverDialog(),
-    );
   }
 }
 

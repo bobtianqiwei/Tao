@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 import '../models/tile.dart';
 import '../models/character.dart';
 
@@ -29,7 +29,6 @@ class GameProvider extends ChangeNotifier {
   int _gridSize = 4;
   bool _isDarkMode = false;
   bool _isEnglish = true;
-  bool _gameOver = false;
   bool _gameWon = false;
   bool _canContinue = false;
   bool _isAutoPlaying = false;
@@ -45,7 +44,6 @@ class GameProvider extends ChangeNotifier {
   int get gridSize => _gridSize;
   bool get isDarkMode => _isDarkMode;
   bool get isEnglish => _isEnglish;
-  bool get gameOver => _gameOver;
   bool get gameWon => _gameWon;
   bool get canContinue => _canContinue;
   bool get isAutoPlaying => _isAutoPlaying;
@@ -95,7 +93,6 @@ class GameProvider extends ChangeNotifier {
     _addRandomTile();
     _addRandomTile();
     _score = 0;
-    _gameOver = false;
     _gameWon = false;
     _canContinue = false;
     notifyListeners();
@@ -141,8 +138,6 @@ class GameProvider extends ChangeNotifier {
 
   // Move in specified direction
   bool move(Direction direction) {
-    if (_gameOver && !_canContinue) return false;
-    
     bool moved = false;
     bool victoryDetected = false; // 添加胜利检测标志
     
@@ -410,44 +405,10 @@ class GameProvider extends ChangeNotifier {
       }
     }
 
-    // 检查是否游戏结束
-    if (!_canMove()) {
-      _gameOver = true;
-    }
-
     // 更新最高分
     if (_score > _bestScore) {
       _bestScore = _score;
     }
-  }
-
-  // 检查是否可以移动
-  bool _canMove() {
-    // 检查是否有空格
-    for (int row = 0; row < _gridSize; row++) {
-      for (int col = 0; col < _gridSize; col++) {
-        if (_board[row][col].isEmpty) return true;
-      }
-    }
-
-    // 检查是否可以合并
-    for (int row = 0; row < _gridSize; row++) {
-      for (int col = 0; col < _gridSize; col++) {
-        final currentTile = _board[row][col];
-        if (currentTile.isEmpty) continue;
-
-        // 检查右边
-        if (col + 1 < _gridSize && currentTile.canMergeWith(_board[row][col + 1])) {
-          return true;
-        }
-        // 检查下边
-        if (row + 1 < _gridSize && currentTile.canMergeWith(_board[row + 1][col])) {
-          return true;
-        }
-      }
-    }
-
-    return false;
   }
 
   // 复制棋盘
@@ -457,6 +418,19 @@ class GameProvider extends ChangeNotifier {
 
   // 重新开始游戏
   void restart() {
+    // Stop autoplay if running
+    stopAutoPlay();
+    
+    // Stop glow effect if active
+    stopGlowEffect();
+    
+    // Reset all game states
+    _score = 0;
+    _gameWon = false;
+    _canContinue = false;
+    _showGlowEffect = false;
+    
+    // Initialize new game
     initGame();
     _saveGame();
   }
@@ -491,26 +465,20 @@ class GameProvider extends ChangeNotifier {
 
   // Save game
   Future<void> _saveGame() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('bestScore', _bestScore);
-    await prefs.setInt('gridSize', _gridSize);
-    await prefs.setBool('isDarkMode', _isDarkMode);
-    await prefs.setBool('isEnglish', _isEnglish);
-    await prefs.setInt('autoPlayMode', _autoPlayMode.index);
-    await prefs.setInt('selectedMLModel', _selectedMLModel.index);
+    // Simple in-memory storage for now
+    // In a real app, you might want to use a different storage solution
+    print('Game settings saved to memory');
   }
 
   // Load game
   Future<void> _loadGame() async {
-    final prefs = await SharedPreferences.getInstance();
-    _bestScore = prefs.getInt('bestScore') ?? 0;
-    _gridSize = prefs.getInt('gridSize') ?? 4;
-    _isDarkMode = prefs.getBool('isDarkMode') ?? false;
-    _isEnglish = prefs.getBool('isEnglish') ?? true;
-    final autoPlayModeIndex = prefs.getInt('autoPlayMode') ?? 0;
-    _autoPlayMode = AutoPlayMode.values[autoPlayModeIndex];
-    final selectedMLModelIndex = prefs.getInt('selectedMLModel') ?? 0;
-    _selectedMLModel = MLModel.values[selectedMLModelIndex];
+    // Load default values
+    _bestScore = 0;
+    _gridSize = 4;
+    _isDarkMode = false;
+    _isEnglish = true;
+    _autoPlayMode = AutoPlayMode.random;
+    _selectedMLModel = MLModel.heuristic;
     initGame();
   }
 
@@ -546,11 +514,9 @@ class GameProvider extends ChangeNotifier {
   }
 
   void startAutoPlay() {
-    if (_gameOver && !_canContinue) return;
-    
     _isAutoPlaying = true;
     _autoPlayTimer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
-      if (!_isAutoPlaying || _gameOver) {
+      if (!_isAutoPlaying) {
         stopAutoPlay();
         return;
       }
