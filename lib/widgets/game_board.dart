@@ -126,8 +126,8 @@ class BoardGridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = isDarkMode ? Colors.grey[800]! : Colors.grey[300]!
-      ..strokeWidth = 1.0
+      ..color = isDarkMode ? Colors.grey[600]! : Colors.grey[400]!
+      ..strokeWidth = 5.0
       ..style = PaintingStyle.stroke;
 
     // Draw board internal grid lines

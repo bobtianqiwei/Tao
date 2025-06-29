@@ -225,14 +225,11 @@ class GameProvider extends ChangeNotifier {
           
           // 立即检查是否生成了"道"
           if (mergedTile.character?.elementType == ElementType.dao) {
-            print('🎉 向下移动中检测到道字！位置: ($i, $col)');
-            print('🎉 道字信息: $mergedTile.character?.character, $mergedTile.character?.elementType');
             _gameWon = true;
             _canContinue = false;
             if (_score > _bestScore) {
               _bestScore = _score;
             }
-            print('🎉 设置胜利状态: _gameWon=$_gameWon, _canContinue=$_canContinue');
             startGlowEffect(); // Start glow effect
             notifyListeners(); // 立即通知UI更新
           }
@@ -278,7 +275,6 @@ class GameProvider extends ChangeNotifier {
           
           // 立即检查是否生成了"道"
           if (mergedTile.character?.elementType == ElementType.dao) {
-            print('🎉 向左移动中检测到道字！位置: ($row, $i)');
             _gameWon = true;
             _canContinue = false;
             if (_score > _bestScore) {
@@ -329,7 +325,6 @@ class GameProvider extends ChangeNotifier {
           
           // 立即检查是否生成了"道"
           if (mergedTile.character?.elementType == ElementType.dao) {
-            print('🎉 向右移动中检测到道字！位置: ($row, $i)');
             _gameWon = true;
             _canContinue = false;
             if (_score > _bestScore) {
@@ -367,7 +362,6 @@ class GameProvider extends ChangeNotifier {
         
         // 立即检查是否生成了"道"
         if (mergedTile.character?.elementType == ElementType.dao) {
-          print('🎉 向上移动中检测到道字！');
           _gameWon = true;
           _canContinue = false;
           if (_score > _bestScore) {
@@ -404,7 +398,6 @@ class GameProvider extends ChangeNotifier {
     for (int row = 0; row < _gridSize; row++) {
       for (int col = 0; col < _gridSize; col++) {
         if (_board[row][col].character?.elementType == ElementType.dao) {
-          print('🎉 检测到道字！位置: ($row, $col)'); // 调试信息
           _gameWon = true;
           _canContinue = false; // 初始设置为false，让胜利对话框显示
           if (_score > _bestScore) {

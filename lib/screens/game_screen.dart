@@ -56,11 +56,6 @@ class _GameScreenState extends State<GameScreen> {
         // 检查胜利状态并触发彩带
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (gameProvider.gameWon && !gameProvider.canContinue && !_hasShownConfetti) {
-            print('🎉 检测到胜利，立即触发彩带');
-            // 停止自动播放
-            if (gameProvider.isAutoPlaying) {
-              gameProvider.stopAutoPlay();
-            }
             // 立即触发彩带效果
             setState(() {
               _showConfetti = true;

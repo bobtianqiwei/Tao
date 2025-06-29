@@ -50,8 +50,6 @@ class _FullScreenConfettiState extends State<FullScreenConfetti> {
   Widget build(BuildContext context) {
     if (!widget.show) return const SizedBox.shrink();
     
-    print('🎨 渲染彩带组件');
-    
     return Positioned.fill(
       child: Stack(
         children: [
